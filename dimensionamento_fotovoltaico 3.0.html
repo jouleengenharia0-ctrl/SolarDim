@@ -1,0 +1,2310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SolarDim — Dimensionamento Fotovoltaico</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   SCREEN STYLES
+   ========================================================= */
+:root {
+  --bg:       #eef2f7;
+  --surface:  #ffffff;
+  --s2:       #f5f7fb;
+  --s3:       #eaecf5;
+  --border:   #dde3ef;
+  --border2:  #c8d0e4;
+  --accent:   #2563eb;
+  --accent-l: #eff4ff;
+  --sky:      #0284c7;
+  --sky-l:    #e0f2fe;
+  --green:    #16a34a;
+  --green-l:  #dcfce7;
+  --amber:    #b45309;
+  --amber-l:  #fef3c7;
+  --red:      #dc2626;
+  --red-l:    #fee2e2;
+  --text:     #1a2234;
+  --t2:       #3d4f68;
+  --t3:       #7b8eaa;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Inter', sans-serif;
+  --r:        10px;
+  --rs:       7px;
+  --sh:       0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.6; }
+
+/* APP */
+.app { max-width: 1340px; margin: 0 auto; padding: 24px 18px 64px; }
+
+/* HEADER */
+header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 22px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); box-shadow: var(--sh); margin-bottom: 22px;
+}
+.logo {
+  width: 40px; height: 40px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+.logo svg { width: 20px; height: 20px; fill: #fff; }
+header h1 { font-size: 18px; font-weight: 700; color: var(--text); }
+header p  { font-size: 12px; color: var(--t3); }
+.h-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.ver { background: var(--accent-l); color: var(--accent); border: 1px solid #bcd0f9; border-radius: 20px; font-size: 11px; font-family: var(--mono); padding: 2px 10px; }
+.btn-pdf {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--accent); color: #fff; border: none; border-radius: var(--rs);
+  padding: 8px 16px; font-size: 13px; font-weight: 600; font-family: var(--sans);
+  cursor: pointer; transition: background .18s, transform .1s;
+}
+.btn-pdf:hover { background: #1d4ed8; }
+.btn-pdf:active { transform: scale(.98); }
+.btn-pdf:disabled { background: var(--border2); cursor: not-allowed; }
+.btn-pdf svg { width: 14px; height: 14px; fill: #fff; }
+
+/* LAYOUT */
+.layout { display: grid; grid-template-columns: 350px 1fr; gap: 18px; align-items: start; }
+@media(max-width:900px){ .layout { grid-template-columns: 1fr; } }
+
+/* PANELS */
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh); overflow: hidden; margin-bottom: 16px; }
+.panel:last-child { margin-bottom: 0; }
+.ph {
+  display: flex; align-items: center; gap: 9px;
+  padding: 12px 18px; border-bottom: 1px solid var(--border); background: var(--s2);
+}
+.ph-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ph h2 { font-size: 11px; font-weight: 700; color: var(--t2); letter-spacing: .6px; text-transform: uppercase; }
+.pb { padding: 18px; }
+
+/* FORM */
+.fld { margin-bottom: 13px; }
+.fld:last-child { margin-bottom: 0; }
+.fld label { display: block; font-size: 11px; font-weight: 600; color: var(--t2); margin-bottom: 5px; letter-spacing: .3px; }
+.fld label em { font-style: normal; color: var(--t3); font-weight: 400; }
+.fld input {
+  width: 100%; background: var(--s2); border: 1.5px solid var(--border);
+  border-radius: var(--rs); color: var(--text); font-family: var(--mono);
+  font-size: 13px; padding: 8px 11px; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.fld input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); background: #fff; }
+.fld input::placeholder { color: var(--t3); font-family: var(--sans); font-size: 12px; }
+.fld textarea {
+  width: 100%; background: var(--s2); border: 1.5px solid var(--border);
+  border-radius: var(--rs); color: var(--text); font-family: var(--mono);
+  font-size: 12.5px; padding: 8px 11px; outline: none; resize: vertical;
+  transition: border-color .15s, box-shadow .15s;
+}
+.fld textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); background: #fff; }
+.fld textarea::placeholder { color: var(--t3); font-family: var(--sans); font-size: 12px; }
+.fld input[type="file"] {
+  width: 100%; font-size: 12px; color: var(--t2); font-family: var(--sans);
+  background: var(--s2); border: 1.5px dashed var(--border2); border-radius: var(--rs);
+  padding: 8px 10px; cursor: pointer;
+}
+.hint { font-size: 11px; color: var(--t3); margin-top: 5px; line-height: 1.5; }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.calc-box {
+  background: var(--accent-l); border: 1.5px solid #bcd0f9; border-radius: var(--rs);
+  padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; margin-top: 4px;
+}
+.calc-box .cb-lbl { font-size: 11px; font-weight: 600; color: var(--accent); }
+.calc-box .cb-val { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--accent); }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+/* MODULE / INVERTER CARDS */
+.mod-card { background: var(--s2); border: 1.5px solid var(--border); border-radius: var(--rs); padding: 14px; margin-bottom: 10px; }
+.mod-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+.mod-badge { background: var(--accent-l); color: var(--accent); border: 1px solid #bcd0f9; border-radius: 20px; font-size: 10px; font-weight: 700; padding: 2px 9px; letter-spacing: .4px; text-transform: uppercase; }
+.btn-rm { background: var(--red-l); border: 1px solid #fca5a5; color: var(--red); border-radius: 5px; padding: 3px 9px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--sans); }
+.btn-rm:hover { background: #fecaca; }
+
+.btn-add {
+  width: 100%; background: transparent; border: 1.5px dashed var(--border2);
+  border-radius: var(--rs); color: var(--t3); padding: 10px;
+  cursor: pointer; font-size: 13px; font-family: var(--sans); transition: all .18s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-add:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-l); }
+
+.btn-calc {
+  width: 100%; background: linear-gradient(135deg, #2563eb, #38bdf8);
+  border: none; border-radius: var(--rs); color: #fff;
+  padding: 12px; cursor: pointer; font-size: 14px; font-weight: 700;
+  font-family: var(--sans); margin-top: 10px; transition: opacity .18s, transform .1s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-calc:hover { opacity: .9; transform: translateY(-1px); }
+.btn-calc:active { transform: translateY(0); }
+.btn-calc svg { width: 16px; height: 16px; fill: #fff; }
+.btn-calc:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+.btn-eye {
+  background: var(--s3); border: 1.5px solid var(--border2); color: var(--t2);
+  border-radius: var(--rs); padding: 0 12px; cursor: pointer; font-size: 14px;
+}
+.btn-eye:hover { background: var(--border); }
+
+.no-mod { text-align: center; padding: 16px; color: var(--t3); font-size: 13px; }
+
+/* RIGHT */
+.right-col { display: flex; flex-direction: column; gap: 16px; }
+
+/* ALERTS */
+.alerts-wrap { padding: 14px 18px 0; display: flex; flex-direction: column; gap: 10px; }
+.alert { padding: 11px 14px; border-radius: var(--rs); font-size: 13px; display: flex; align-items: flex-start; gap: 9px; line-height: 1.55; }
+.alert .ai { font-size: 15px; flex-shrink: 0; line-height: 1; margin-top: 1px; }
+.alert.err  { background: var(--red-l);   border: 1px solid #fca5a5; color: #991b1b; }
+.alert.warn { background: var(--amber-l); border: 1px solid #fde68a; color: #78350f; }
+.alert.ok   { background: var(--green-l); border: 1px solid #86efac; color: #14532d; }
+
+/* PROGRESS */
+.prog { padding: 14px 18px 0; }
+.prog-lbl { display: flex; justify-content: space-between; font-size: 12px; color: var(--t3); margin-bottom: 5px; }
+.prog-track { height: 8px; background: var(--s3); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 10px; }
+.prog-fill  { height: 100%; border-radius: 4px; transition: width .4s, background .4s; }
+
+/* STATS */
+.stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+@media(max-width:1100px){ .stats-row { grid-template-columns: repeat(2,1fr); } }
+.scard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--sh); }
+.scard .sl { font-size: 10px; font-weight: 600; color: var(--t3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+.scard .sv { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--text); }
+.scard .su { font-size: 12px; color: var(--t3); margin-left: 2px; font-family: var(--sans); }
+.scard.ca .sv { color: var(--accent); }
+.scard.cg .sv { color: var(--green); }
+.scard.cs .sv { color: var(--sky); }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; padding: 14px 18px 18px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: var(--s2); border-bottom: 2px solid var(--border); }
+thead th { padding: 9px 12px; text-align: left; font-size: 10px; font-weight: 700; color: var(--t3); letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+tbody tr:hover { background: var(--s2); }
+tbody tr:last-child { border-bottom: none; }
+tbody td { padding: 9px 12px; vertical-align: middle; white-space: nowrap; }
+.mppt-tag { background: var(--accent-l); color: var(--accent); border: 1px solid #bcd0f9; font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.sp { display: inline-flex; align-items: center; gap: 4px; background: var(--sky-l); border: 1px solid #bae6fd; border-radius: 5px; padding: 2px 8px; font-family: var(--mono); font-size: 12px; color: var(--sky); }
+.sp.emp { background: var(--s3); border-color: var(--border); color: var(--t3); border-style: dashed; }
+.sp small { font-size: 10px; color: var(--t3); }
+.str-input {
+  width: 56px; background: var(--sky-l); border: 1.5px solid #bae6fd; border-radius: 5px;
+  padding: 3px 6px; font-family: var(--mono); font-size: 12px; color: var(--sky); text-align: center;
+}
+.str-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(37,99,235,.15); background: #fff; }
+.str-input::placeholder { color: var(--t3); }
+td.tv  { color: var(--amber); font-family: var(--mono); }
+td.ti  { color: var(--sky);   font-family: var(--mono); }
+td.tw  { color: var(--green); font-family: var(--mono); font-weight: 600; }
+td.tn  { font-size: 12px; color: var(--t3); max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+td.tdelta { font-size: 11px; }
+.ok-delta  { color: var(--green); }
+.bad-delta { color: var(--red); font-weight: 600; }
+
+/* CHARTS */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media(max-width:1100px){ .charts-row { grid-template-columns: 1fr; } }
+.chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh); padding: 16px; }
+.chart-title { font-size: 11px; font-weight: 700; color: var(--t2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+
+/* NARRATIVE */
+.narr { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--sh); padding: 20px 22px; }
+.narr h3 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 13px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.narr p { font-size: 13px; color: var(--t2); line-height: 1.75; margin-bottom: 10px; }
+.narr p:last-child { margin-bottom: 0; }
+.narr ul { list-style: none; padding: 0; margin-bottom: 12px; }
+.narr ul li { font-size: 12.5px; color: var(--t2); line-height: 1.65; padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 8px; }
+.narr ul li:last-child { border-bottom: none; }
+.li-tag { background: var(--accent-l); color: var(--accent); font-family: var(--mono); font-size: 9px; padding: 1px 6px; border-radius: 20px; flex-shrink: 0; font-weight: 700; }
+
+/* EMPTY */
+.empty { text-align: center; padding: 48px 20px; color: var(--t3); }
+.empty .ei { font-size: 34px; opacity: .3; margin-bottom: 10px; }
+
+/* =========================================================
+   PRINT / PDF
+   ========================================================= */
+@media print {
+  @page { size: A4; margin: 16mm 14mm; }
+  body { background: #fff !important; font-size: 11.5px; }
+  .app { padding: 0; max-width: 100%; }
+
+  .left-col, .btn-pdf, .btn-add, .btn-calc, .btn-rm, .h-right { display: none !important; }
+  .layout { grid-template-columns: 1fr !important; }
+
+  header { box-shadow: none !important; border: 1.5px solid var(--border) !important; margin-bottom: 14px; padding: 10px 16px; }
+  .logo { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+
+  .panel, .scard, .chart-box, .narr {
+    box-shadow: none !important;
+    break-inside: avoid;
+    border: 1px solid #dde3ef !important;
+  }
+
+  .stats-row { grid-template-columns: repeat(4,1fr) !important; gap: 8px; margin-bottom: 12px; }
+  .charts-row { grid-template-columns: 1fr 1fr !important; gap: 10px; margin-bottom: 12px; }
+
+  .tbl-wrap { padding: 10px 14px 14px; }
+  table { font-size: 11px; }
+  thead th, tbody td { padding: 6px 10px; }
+
+  .alerts-wrap { padding: 10px 14px 0; }
+
+  .narr { break-before: auto; margin-top: 12px; }
+  .prog { padding: 10px 14px 0; }
+
+  #print-footer { display: flex !important; }
+
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+
+#print-footer {
+  display: none;
+  justify-content: space-between;
+  font-size: 10px; color: var(--t3);
+  padding-top: 8px; margin-top: 6px;
+  border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 24 24"><path d="M12 2L9 9H2l5.5 4-2 7L12 16l6.5 4-2-7L22 9h-7L12 2z"/></svg>
+  </div>
+  <div>
+    <h1>SolarDim</h1>
+    <p>Dimensionamento Fotovoltaico Profissional</p>
+  </div>
+  <div class="h-right">
+    <span class="ver">v3.0</span>
+    <button class="btn-pdf" id="pdf-btn" disabled onclick="exportPDF()">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM8 17h8v1.5H8V17zm0-3h8v1.5H8V14zm0-3h5v1.5H8V11z"/></svg>
+      Exportar PDF
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+<!-- ============ LEFT ============ -->
+<div class="left-col">
+
+  <!-- ASSISTENTE IA -->
+  <div class="panel">
+    <div class="ph">
+      <div class="ph-dot" style="background:#7c3aed"></div>
+      <h2>Assistente IA — Preencher com Datasheet</h2>
+    </div>
+    <div class="pb">
+      <div class="fld">
+        <label>Chave da API OpenAI</label>
+        <div style="display:flex;gap:6px;">
+          <input type="password" id="ai-key" placeholder="sk-..." style="flex:1" oninput="saveAISettings()">
+          <button type="button" class="btn-eye" onclick="toggleKeyVisibility()">👁</button>
+        </div>
+        <div class="hint">Fica salva só neste navegador (localStorage) — nunca é enviada a nenhum servidor além da própria OpenAI.</div>
+      </div>
+      <div class="fld">
+        <label>Modelo <em>(opcional)</em></label>
+        <input type="text" id="ai-model" placeholder="gpt-4o-mini" oninput="saveAISettings()">
+      </div>
+      <div class="fld">
+        <label>Anexar datasheet(s) em PDF <em>(pode anexar vários — inversores e módulos, um de cada vez ou juntos)</em></label>
+        <input type="file" id="ai-pdf" accept=".pdf,application/pdf" multiple onchange="handlePdfUpload(this)">
+        <div class="hint">O texto é extraído aqui no navegador. Anexe quantos PDFs precisar (repita o anexo quando quiser); todos ficam na lista abaixo até você calcular. Só funciona com PDFs que tenham texto selecionável — PDFs escaneados (imagem) não são lidos; nesse caso, cole as informações manualmente na caixa de texto.</div>
+        <div id="pdf-list" style="margin-top:8px"></div>
+      </div>
+      <div class="fld">
+        <label>Cole o(s) datasheet(s) e descreva quantidades/modelos</label>
+        <textarea id="ai-text" rows="9" placeholder="Ex: cole o texto do datasheet do inversor Growatt MID 80KTL3-X e do módulo Jinko Tiger Neo 580W. Quero 2 inversores desse modelo e 600 módulos desse modelo. Tem duas orientações de telhado (Norte 30m² e Sul 60m²)."></textarea>
+        <div class="hint">Pode descrever aqui também se o telhado tem mais de uma orientação/água (ex: "tem duas orientações", com ou sem a área em m² — a área é opcional). Se não mencionar orientação, o cálculo considera telhado único, sem dividir os MPPTs.</div>
+      </div>
+      <button class="btn-calc" id="ai-btn" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)" onclick="analyzeWithAI()">
+        ✨ Preencher com IA
+      </button>
+      <div id="ai-status" style="margin-top:8px;font-size:12px;"></div>
+    </div>
+  </div>
+
+  <!-- INVERSORES -->
+  <div class="panel">
+    <div class="ph">
+      <div class="ph-dot" style="background:var(--accent)"></div>
+      <h2>Inversores</h2>
+    </div>
+    <div class="pb">
+      <div class="fld">
+        <label>Modelos salvos <em>(opcional)</em></label>
+        <div style="display:flex;gap:6px;">
+          <select id="saved-inv-select" style="flex:1;background:var(--s2);border:1.5px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:var(--sans);font-size:12.5px;padding:8px 8px;"></select>
+          <button type="button" class="btn-eye" onclick="loadSavedInv()" title="Carregar como novo inversor">⬇</button>
+          <button type="button" class="btn-eye" onclick="deleteSavedInv()" title="Remover da lista de salvos">🗑</button>
+        </div>
+      </div>
+      <div id="inv-list"><div class="no-mod">Nenhum inversor adicionado ainda.</div></div>
+      <button class="btn-add" onclick="addInv()">＋ Adicionar Inversor</button>
+    </div>
+  </div>
+
+  <!-- MÓDULOS -->
+  <div class="panel">
+    <div class="ph">
+      <div class="ph-dot" style="background:var(--sky)"></div>
+      <h2>Módulos Fotovoltaicos</h2>
+    </div>
+    <div class="pb">
+      <div class="fld">
+        <label>Modelos salvos <em>(opcional)</em></label>
+        <div style="display:flex;gap:6px;">
+          <select id="saved-mod-select" style="flex:1;background:var(--s2);border:1.5px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:var(--sans);font-size:12.5px;padding:8px 8px;"></select>
+          <button type="button" class="btn-eye" onclick="loadSavedMod()" title="Carregar como novo módulo">⬇</button>
+          <button type="button" class="btn-eye" onclick="deleteSavedMod()" title="Remover da lista de salvos">🗑</button>
+        </div>
+      </div>
+      <div id="mod-list"><div class="no-mod">Nenhum modelo adicionado ainda.</div></div>
+      <button class="btn-add" onclick="addMod()">＋ Adicionar Modelo de Módulo</button>
+    </div>
+  </div>
+
+  <!-- ORIENTAÇÕES -->
+  <div class="panel">
+    <div class="ph">
+      <div class="ph-dot" style="background:#d97706"></div>
+      <h2>Orientações do Telhado <em style="text-transform:none;font-weight:400">(opcional)</em></h2>
+    </div>
+    <div class="pb">
+      <div class="hint" style="margin-bottom:10px">Use esta seção só se o telhado tiver mais de uma água/orientação e você quiser que cada MPPT fique numa única orientação. Se deixar vazio, o cálculo segue exatamente como hoje, sem distinção de orientação.</div>
+      <div id="ori-list"><div class="no-mod">Nenhuma orientação adicionada.</div></div>
+      <button class="btn-add" onclick="addOri()">＋ Adicionar Orientação</button>
+      <div id="ori-actions"></div>
+    </div>
+  </div>
+
+  <!-- CALCULAR -->
+  <div class="panel">
+    <div class="pb">
+      <button class="btn-calc" onclick="calcular()" style="margin-top:0">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Calcular Dimensionamento
+      </button>
+    </div>
+  </div>
+
+</div><!-- /left -->
+
+<!-- ============ RIGHT ============ -->
+<div class="right-col">
+
+  <!-- RESULT PANEL -->
+  <div class="panel">
+    <div class="ph">
+      <div class="ph-dot" style="background:var(--green)"></div>
+      <h2>Resultado do Dimensionamento</h2>
+    </div>
+    <div class="alerts-wrap" id="alerts"></div>
+
+    <div id="empty" class="empty">
+      <div class="ei">☀️</div>
+      <p>Configure os inversores e os módulos,<br>depois clique em <strong>Calcular Dimensionamento</strong>.</p>
+    </div>
+
+    <div id="result-wrap" style="display:none">
+      <div class="tbl-wrap" id="inv-balance-wrap" style="padding-bottom:0"></div>
+      <div class="prog" id="prog-section"></div>
+      <div class="hint" style="padding:0 18px 10px">✏️ As células de String e o Modelo de cada MPPT são editáveis. Ao <strong>aumentar</strong> uma String, o sistema pergunta de onde tirar os módulos (estoque não alocado ou outro MPPT do mesmo modelo) — nunca cria módulo do nada. Ao <strong>diminuir</strong>, os módulos voltam pro estoque livremente. Dá pra trocar o modelo alocado num MPPT pelo seletor da coluna "Modelo" (útil pra reaproveitar um MPPT zerado com outro produto). Voc/Δ/Isc/Potência recalculam na hora; veja a faixa de módulos válida passando o mouse em "MPPT". Clique em "Calcular Dimensionamento" de novo para refazer a alocação automática do zero.</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr id="t-head"></tr></thead>
+          <tbody id="t-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row" id="charts-row" style="display:none">
+    <div class="chart-box">
+      <div class="chart-title">Potência por MPPT (kWp)</div>
+      <canvas id="ch-bar" height="190"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Tensão de String (V)</div>
+      <canvas id="ch-volt" height="190"></canvas>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="stats-row" style="display:none">
+    <div class="scard ca">
+      <div class="sl">Total de Módulos</div>
+      <div class="sv" id="s-mod">—</div>
+    </div>
+    <div class="scard cg">
+      <div class="sl">Potência Total</div>
+      <div class="sv" id="s-pwr">—<span class="su">kWp</span></div>
+    </div>
+    <div class="scard cs">
+      <div class="sl">MPPTs Usados</div>
+      <div class="sv" id="s-mpp">—</div>
+    </div>
+    <div class="scard">
+      <div class="sl">Fator Overload</div>
+      <div class="sv" id="s-ovl">—<span class="su">%</span></div>
+    </div>
+  </div>
+
+  <!-- NARRATIVE -->
+  <div class="narr" id="narr" style="display:none">
+    <h3>📋 Relatório Técnico — Divisão de Strings e MPPTs</h3>
+    <div id="narr-body"></div>
+  </div>
+
+  <!-- PRINT FOOTER -->
+  <div id="print-footer">
+    <span>SolarDim v3.0 — Dimensionamento Fotovoltaico Profissional</span>
+    <span id="footer-date"></span>
+  </div>
+
+</div><!-- /right -->
+</div><!-- /layout -->
+</div><!-- /app -->
+
+<!-- MODAL: escolher de onde tirar módulos ao aumentar um MPPT manualmente -->
+<div id="move-overlay" style="display:none;position:fixed;inset:0;background:rgba(20,30,50,.45);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border-radius:var(--r);box-shadow:var(--sh);max-width:460px;width:100%;max-height:82vh;overflow:auto;">
+    <div class="ph">
+      <div class="ph-dot" style="background:var(--accent)"></div>
+      <h2>De onde tirar os módulos?</h2>
+    </div>
+    <div class="pb" id="move-body"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+}
+/* ============================================================
+   STATE — Inversores e Módulos guardam os próprios valores
+   (nunca só os IDs), para não perder dados ao re-renderizar.
+   ============================================================ */
+let invs = [];
+let invCnt = 0;
+let pdfAttachments = [];
+let pdfCnt = 0;
+let mods = [];
+let modCnt = 0;
+let orientations = [];
+let oriCnt = 0;
+let chBar = null, chVolt = null;
+
+function escAttr(v) {
+  if (v === undefined || v === null) return '';
+  return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+/* ============================================================
+   INVERSORES — CRUD + RENDER
+   ============================================================ */
+function addInv(partial) {
+  invCnt++;
+  invs.push(Object.assign({ id:'i'+invCnt, name:'', qty:1, vmax:'', vstart:'', imax:'', pmax:'', nmppt:'', ent:'' }, partial||{}));
+  renderInvs();
+}
+function removeInv(id) { invs = invs.filter(x => x.id !== id); renderInvs(); }
+function updateInv(id, field, value) {
+  const inv = invs.find(x => x.id === id);
+  if (!inv) return;
+  inv[field] = value;
+  if (field === 'vmax' || field === 'vstart') {
+    const vmax = parseFloat(field==='vmax' ? value : inv.vmax);
+    const vstart = parseFloat(field==='vstart' ? value : inv.vstart);
+    const vnomEl = document.getElementById(id+'-vnomtxt');
+    const vminEl = document.getElementById(id+'-vmintxt');
+    if (vnomEl) vnomEl.textContent = (vmax > 0) ? (vmax*0.6).toFixed(0)+' V' : '— V';
+    if (vminEl) vminEl.textContent = (vstart > 0) ? (vstart*1.5).toFixed(0)+' V' : '— V';
+  }
+}
+function vnomText(inv) { const v = parseFloat(inv.vmax); return (v>0) ? (v*0.6).toFixed(0)+' V' : '— V'; }
+function vminText(inv) { const v = parseFloat(inv.vstart); return (v>0) ? (v*1.5).toFixed(0)+' V' : '— V'; }
+
+function renderInvs() {
+  const el = document.getElementById('inv-list');
+  if (!invs.length) { el.innerHTML = '<div class="no-mod">Nenhum inversor adicionado ainda.</div>'; return; }
+  el.innerHTML = invs.map((inv, i) => `
+    <div class="mod-card">
+      <div class="mod-head">
+        <span class="mod-badge">Inversor ${i+1}</span>
+        <span style="display:flex;gap:6px;">
+          <button class="btn-rm" style="background:var(--green-l);border-color:#86efac;color:var(--green)" onclick="saveInvModel('${inv.id}')">💾 Salvar</button>
+          <button class="btn-rm" onclick="removeInv('${inv.id}')">✕ Remover</button>
+        </span>
+      </div>
+      <div class="fld">
+        <label>Nome / Modelo</label>
+        <input type="text" value="${escAttr(inv.name)}" oninput="updateInv('${inv.id}','name',this.value)" placeholder="ex: Growatt MID 80KTL3-X" style="font-family:var(--sans)">
+      </div>
+      <div class="frow">
+        <div class="fld"><label>Qtd. de Unidades</label><input type="number" value="${escAttr(inv.qty)}" min="1" step="1" oninput="updateInv('${inv.id}','qty',this.value)"></div>
+        <div class="fld"><label>Vmax CC <em>(V)</em></label><input type="number" value="${escAttr(inv.vmax)}" min="1" step="1" oninput="updateInv('${inv.id}','vmax',this.value)"></div>
+      </div>
+      <div class="frow">
+        <div class="fld"><label>Vstart <em>(V)</em></label><input type="number" value="${escAttr(inv.vstart)}" min="1" step="1" oninput="updateInv('${inv.id}','vstart',this.value)"></div>
+        <div class="fld"><label>Isc Máx. por MPPT <em>(A)</em></label><input type="number" value="${escAttr(inv.imax)}" min="0" step="0.1" oninput="updateInv('${inv.id}','imax',this.value)"></div>
+      </div>
+      <div class="hint">Corrente de curto-circuito MÁXIMA admitida por MPPT (datasheet às vezes chama de "Imax por MPPT" ou "max. short-circuit current per MPPT") — não a corrente nominal/de operação, que costuma ser um valor menor no mesmo datasheet. É contra este valor que o Isc total das strings em paralelo é comparado.</div>
+      <div class="frow">
+        <div class="fld"><label>Potência Máx. CC <em>(kW)</em></label><input type="number" value="${escAttr(inv.pmax)}" min="0" step="0.1" oninput="updateInv('${inv.id}','pmax',this.value)"></div>
+        <div class="fld"><label>Qtd. de MPPTs</label><input type="number" value="${escAttr(inv.nmppt)}" min="1" step="1" oninput="updateInv('${inv.id}','nmppt',this.value)"></div>
+      </div>
+      <div class="fld"><label>Entradas por MPPT</label><input type="number" value="${escAttr(inv.ent)}" min="1" max="4" step="1" oninput="updateInv('${inv.id}','ent',this.value)"></div>
+      <div class="hint">Nº de strings que podem ser ligadas em paralelo neste MPPT. Junto com o Imax, define quantas strings o cálculo pode colocar lado a lado no mesmo MPPT.</div>
+      <div class="calc-box" style="margin-top:8px">
+        <span class="cb-lbl">Nominal (60%) / Mín. (Vstart×1,5)</span>
+        <span class="cb-val" style="font-size:13px"><span id="${inv.id}-vnomtxt">${vnomText(inv)}</span> / <span id="${inv.id}-vmintxt">${vminText(inv)}</span></span>
+      </div>
+    </div>`).join('');
+}
+
+/* ============================================================
+   MÓDULOS — CRUD + RENDER
+   ============================================================ */
+function addMod(partial) {
+  modCnt++;
+  mods.push(Object.assign({ id:'m'+modCnt, name:'', qty:'', wp:'', voc:'', isc:'', comp:'', larg:'', oriQty:{} }, partial||{}));
+  renderMods();
+}
+function removeMod(id) { mods = mods.filter(x => x.id !== id); renderMods(); }
+function updateMod(id, field, value) {
+  const m = mods.find(x => x.id === id);
+  if (m) m[field] = value;
+}
+function updateModOri(id, oriId, value) {
+  const m = mods.find(x => x.id === id);
+  if (!m) return;
+  if (!m.oriQty) m.oriQty = {};
+  m.oriQty[oriId] = value;
+}
+function renderMods() {
+  const el = document.getElementById('mod-list');
+  if (!mods.length) { el.innerHTML = '<div class="no-mod">Nenhum modelo adicionado ainda.</div>'; return; }
+  const oriActive = orientations.length > 0;
+  el.innerHTML = mods.map((m, i) => `
+    <div class="mod-card">
+      <div class="mod-head">
+        <span class="mod-badge">Modelo ${i + 1}</span>
+        <span style="display:flex;gap:6px;">
+          <button class="btn-rm" style="background:var(--green-l);border-color:#86efac;color:var(--green)" onclick="saveModModel('${m.id}')">💾 Salvar</button>
+          <button class="btn-rm" onclick="removeMod('${m.id}')">✕ Remover</button>
+        </span>
+      </div>
+      <div class="fld">
+        <label>Nome / Modelo</label>
+        <input type="text" value="${escAttr(m.name)}" oninput="updateMod('${m.id}','name',this.value)" placeholder="ex: Jinko Tiger 580W" style="font-family:var(--sans)">
+      </div>
+      <div class="frow">
+        <div class="fld"><label>Quantidade Total</label><input type="number" value="${escAttr(m.qty)}" min="1" step="1" oninput="updateMod('${m.id}','qty',this.value)"></div>
+        <div class="fld"><label>Potência <em>(Wp)</em></label><input type="number" value="${escAttr(m.wp)}" min="1" step="1" oninput="updateMod('${m.id}','wp',this.value)"></div>
+      </div>
+      <div class="frow">
+        <div class="fld"><label>Voc <em>(V)</em></label><input type="number" value="${escAttr(m.voc)}" min="1" step="0.01" oninput="updateMod('${m.id}','voc',this.value)"></div>
+        <div class="fld"><label>Isc <em>(A)</em></label><input type="number" value="${escAttr(m.isc)}" min="0.1" step="0.01" oninput="updateMod('${m.id}','isc',this.value)"></div>
+      </div>
+      ${oriActive ? `
+      <hr class="divider">
+      <div class="frow">
+        <div class="fld"><label>Comprimento painel <em>(mm, opcional)</em></label><input type="number" value="${escAttr(m.comp)}" min="1" step="1" oninput="updateMod('${m.id}','comp',this.value)" placeholder="ex: 2278"></div>
+        <div class="fld"><label>Largura painel <em>(mm, opcional)</em></label><input type="number" value="${escAttr(m.larg)}" min="1" step="1" oninput="updateMod('${m.id}','larg',this.value)" placeholder="ex: 1134"></div>
+      </div>
+      <div class="hint">Dimensões do datasheet — só necessárias para checar se a quantidade abaixo cabe na área de cada orientação.</div>
+      <div class="fld" style="margin-top:8px"><label>Distribuição por orientação <em>(qtd. de módulos em cada uma — o que sobrar da Quantidade Total é tratado como sem orientação definida)</em></label></div>
+      <div class="frow" style="grid-template-columns:repeat(${Math.min(orientations.length,2)},1fr)">
+        ${orientations.map(o => `
+        <div class="fld"><label>${escAttr(o.name) || 'Orientação'}</label>
+        <input type="number" min="0" step="1" value="${escAttr(m.oriQty && m.oriQty[o.id])}" oninput="updateModOri('${m.id}','${o.id}',this.value)" placeholder="qtd"></div>`).join('')}
+      </div>` : ''}
+    </div>`).join('');
+}
+
+/* ============================================================
+   MODELOS SALVOS — biblioteca local (localStorage) de inversores e
+   módulos. Nada é salvo sozinho: só grava quando o usuário clica em
+   "💾 Salvar" no card, já com os valores conferidos por ele.
+   ============================================================ */
+const SAVED_INV_KEY = 'solardim_saved_inverters';
+const SAVED_MOD_KEY = 'solardim_saved_modules';
+
+function loadSavedInvs() {
+  try { return JSON.parse(localStorage.getItem(SAVED_INV_KEY)) || []; } catch (e) { return []; }
+}
+function loadSavedMods() {
+  try { return JSON.parse(localStorage.getItem(SAVED_MOD_KEY)) || []; } catch (e) { return []; }
+}
+function persistSavedInvs(list) { localStorage.setItem(SAVED_INV_KEY, JSON.stringify(list)); }
+function persistSavedMods(list) { localStorage.setItem(SAVED_MOD_KEY, JSON.stringify(list)); }
+
+function renderSavedInvSelect() {
+  const el = document.getElementById('saved-inv-select');
+  if (!el) return;
+  const list = loadSavedInvs();
+  el.innerHTML = list.length
+    ? list.map((s, i) => `<option value="${i}">${escAttr(s.name)}</option>`).join('')
+    : '<option value="">Nenhum inversor salvo ainda</option>';
+}
+function renderSavedModSelect() {
+  const el = document.getElementById('saved-mod-select');
+  if (!el) return;
+  const list = loadSavedMods();
+  el.innerHTML = list.length
+    ? list.map((s, i) => `<option value="${i}">${escAttr(s.name)}</option>`).join('')
+    : '<option value="">Nenhum módulo salvo ainda</option>';
+}
+
+function saveInvModel(id) {
+  const inv = invs.find(x => x.id === id);
+  if (!inv) return;
+  const name = (inv.name || '').trim();
+  if (!name) { alert('Preencha o campo "Nome / Modelo" antes de salvar.'); return; }
+  const model = { name, vmax: inv.vmax, vstart: inv.vstart, imax: inv.imax, pmax: inv.pmax, nmppt: inv.nmppt, ent: inv.ent };
+  const list = loadSavedInvs();
+  const idx = list.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
+  if (idx >= 0) {
+    if (!confirm(`Já existe um inversor salvo como "${name}". Substituir pelos valores atuais?`)) return;
+    list[idx] = model;
+  } else {
+    list.push(model);
+  }
+  persistSavedInvs(list);
+  renderSavedInvSelect();
+}
+function saveModModel(id) {
+  const m = mods.find(x => x.id === id);
+  if (!m) return;
+  const name = (m.name || '').trim();
+  if (!name) { alert('Preencha o campo "Nome / Modelo" antes de salvar.'); return; }
+  const model = { name, wp: m.wp, voc: m.voc, isc: m.isc, comp: m.comp, larg: m.larg };
+  const list = loadSavedMods();
+  const idx = list.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
+  if (idx >= 0) {
+    if (!confirm(`Já existe um módulo salvo como "${name}". Substituir pelos valores atuais?`)) return;
+    list[idx] = model;
+  } else {
+    list.push(model);
+  }
+  persistSavedMods(list);
+  renderSavedModSelect();
+}
+
+function loadSavedInv() {
+  const sel = document.getElementById('saved-inv-select');
+  const list = loadSavedInvs();
+  const s = list[parseInt(sel.value)];
+  if (!s) return;
+  addInv({ name: s.name, vmax: s.vmax, vstart: s.vstart, imax: s.imax, pmax: s.pmax, nmppt: s.nmppt, ent: s.ent });
+}
+function loadSavedMod() {
+  const sel = document.getElementById('saved-mod-select');
+  const list = loadSavedMods();
+  const s = list[parseInt(sel.value)];
+  if (!s) return;
+  addMod({ name: s.name, wp: s.wp, voc: s.voc, isc: s.isc, comp: s.comp || '', larg: s.larg || '' });
+}
+function deleteSavedInv() {
+  const sel = document.getElementById('saved-inv-select');
+  const idx = parseInt(sel.value);
+  if (isNaN(idx)) return;
+  const list = loadSavedInvs();
+  if (!list[idx]) return;
+  if (!confirm(`Remover "${list[idx].name}" da lista de inversores salvos?`)) return;
+  list.splice(idx, 1);
+  persistSavedInvs(list);
+  renderSavedInvSelect();
+}
+function deleteSavedMod() {
+  const sel = document.getElementById('saved-mod-select');
+  const idx = parseInt(sel.value);
+  if (isNaN(idx)) return;
+  const list = loadSavedMods();
+  if (!list[idx]) return;
+  if (!confirm(`Remover "${list[idx].name}" da lista de módulos salvos?`)) return;
+  list.splice(idx, 1);
+  persistSavedMods(list);
+  renderSavedModSelect();
+}
+
+/* ============================================================
+   ORIENTAÇÕES DO TELHADO — CRUD + RENDER (opcional; se a lista
+   ficar vazia, o cálculo se comporta exatamente como antes).
+   ============================================================ */
+function addOri(partial) {
+  oriCnt++;
+  orientations.push(Object.assign({ id:'o'+oriCnt, name:'', area:'', util:'', isNorte:false }, partial||{}));
+  renderOris();
+  renderMods();
+}
+function removeOri(id) {
+  orientations = orientations.filter(x => x.id !== id);
+  mods.forEach(m => { if (m.oriQty) delete m.oriQty[id]; });
+  renderOris();
+  renderMods();
+}
+function updateOri(id, field, value) {
+  const o = orientations.find(x => x.id === id);
+  if (o) o[field] = value;
+}
+function updateOriNorte(id, checked) {
+  const o = orientations.find(x => x.id === id);
+  if (o) o.isNorte = checked;
+  renderOris();
+}
+function renderOris() {
+  const el = document.getElementById('ori-list');
+  const actionsEl = document.getElementById('ori-actions');
+  if (!orientations.length) {
+    el.innerHTML = '<div class="no-mod">Nenhuma orientação adicionada.</div>';
+    actionsEl.innerHTML = '';
+    return;
+  }
+  el.innerHTML = orientations.map((o, i) => `
+    <div class="mod-card">
+      <div class="mod-head">
+        <span class="mod-badge">Orientação ${i + 1}${o.isNorte ? ' ☀ Norte' : ''}</span>
+        <button class="btn-rm" onclick="removeOri('${o.id}')">✕ Remover</button>
+      </div>
+      <div class="fld">
+        <label>Nome</label>
+        <input type="text" value="${escAttr(o.name)}" oninput="updateOri('${o.id}','name',this.value)" placeholder="ex: Água Norte / Telhado Frente" style="font-family:var(--sans)">
+      </div>
+      <div class="frow">
+        <div class="fld"><label>Área disponível <em>(m², opcional)</em></label><input type="number" value="${escAttr(o.area)}" min="0" step="0.1" oninput="updateOri('${o.id}','area',this.value)" placeholder="ex: 30"></div>
+        <div class="fld"><label>Aproveitamento <em>(%, opcional)</em></label><input type="number" value="${escAttr(o.util)}" min="1" max="100" step="1" oninput="updateOri('${o.id}','util',this.value)" placeholder="100"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:7px;margin-top:10px;font-size:12px;color:var(--t2);cursor:pointer;">
+        <input type="checkbox" ${o.isNorte ? 'checked' : ''} onchange="updateOriNorte('${o.id}', this.checked)" style="width:14px;height:14px;cursor:pointer;">
+        ☀ Esta orientação é Norte — priorizar o máximo de módulos aqui na distribuição automática
+      </label>
+    </div>`).join('');
+  actionsEl.innerHTML = `
+    <button class="btn-add" style="margin-top:8px;border-style:solid" onclick="autoDistributeByArea()">📐 Distribuir módulos automaticamente pela área</button>
+    <div id="ori-auto-status" style="margin-top:6px;font-size:12px;"></div>`;
+}
+
+function panelAreaM2(m) {
+  const c = parseFloat(m.comp), l = parseFloat(m.larg);
+  if (!(c > 0) || !(l > 0)) return null;
+  return (c / 1000) * (l / 1000);
+}
+function oriCapacityM2(o) {
+  const area = parseFloat(o.area);
+  if (!(area > 0)) return null;
+  const util = parseFloat(o.util);
+  const factor = (util > 0 && util <= 100) ? util / 100 : 1;
+  return area * factor;
+}
+
+/* Divide `qty` igualmente entre os ids em `ids`, somando ao que já
+   existir em oriQtyObj (usado tanto para o "resto" quanto para o caso
+   em que nenhuma orientação tem área informada). */
+function evenSplitInto(oriQtyObj, ids, qty) {
+  if (!ids.length || qty <= 0) return;
+  const base = Math.floor(qty / ids.length);
+  let extra = qty - base * ids.length;
+  ids.forEach(id => {
+    let take = base + (extra > 0 ? 1 : 0);
+    if (extra > 0) extra--;
+    if (take > 0) oriQtyObj[id] = (oriQtyObj[id] || 0) + take;
+  });
+}
+
+/* Quando não há capacidade (por área) para decidir, distribui `qty` entre
+   `ids`: se algum deles for orientação Norte, elas levam tudo entre si,
+   dividido igualmente; só reparte igualmente entre os demais quando
+   nenhum dos candidatos é Norte. */
+function distributeAmong(oriQtyObj, ids, qty) {
+  const norteIds = ids.filter(id => orientations.find(o => o.id === id && o.isNorte));
+  evenSplitInto(oriQtyObj, norteIds.length ? norteIds : ids, qty);
+}
+
+/* "Water-filling": divide `qty` o mais igualmente possível entre `ids`,
+   respeitando o teto (m.cap, pode ser Infinity) de cada um. Quem não
+   comporta a fatia igual fica só com o máximo que cabe nele (capLeft), e
+   a diferença é redistribuída entre os demais na rodada seguinte — assim,
+   com múltiplas orientações Norte, nenhuma é enchida até o talo antes de
+   dar a vez às outras; a demanda é balanceada entre todas simultaneamente. */
+function fairSplitWithCaps(ids, capsById, qty) {
+  const alloc = {};
+  ids.forEach(id => { alloc[id] = 0; });
+  let remaining = qty;
+  let active = ids.slice();
+  while (remaining > 0 && active.length) {
+    const share = remaining / active.length;
+    const nextActive = [];
+    let usedThisRound = 0;
+    let anyMaxed = false;
+    for (const id of active) {
+      const capLeft = capsById[id] - alloc[id];
+      if (capLeft <= share) {
+        alloc[id] += capLeft;
+        usedThisRound += capLeft;
+        anyMaxed = true;
+      } else {
+        nextActive.push(id);
+      }
+    }
+    if (anyMaxed) {
+      remaining -= usedThisRound;
+      active = nextActive;
+      continue;
+    }
+    const base = Math.floor(remaining / active.length);
+    let extra = remaining - base * active.length;
+    active.forEach(id => {
+      let take = base + (extra > 0 ? 1 : 0);
+      if (extra > 0) extra--;
+      alloc[id] += take;
+    });
+    remaining = 0;
+  }
+  return alloc;
+}
+
+/* Preenche a distribuição por orientação de cada módulo. A área (m²) é
+   OPCIONAL: quando alguma orientação tem área e o módulo tem
+   Comprimento/Largura, usa a área do painel (comprimento × largura) para
+   calcular quantos módulos cabem ali (ex: 10 módulos de 3 m² cada exigem
+   30 m² de área na orientação); o que não couber tenta ser colocado em
+   outra orientação, respeitando o teto de cada uma. O que não tem como
+   ser calculado por área (falta área e/ou dimensão do painel) é dividido
+   entre as orientações candidatas, em vez de ser pulado. Orientações
+   marcadas como Norte são preenchidas primeiro e, havendo mais de uma,
+   a demanda é balanceada igualmente entre elas (respeitando o teto de
+   cada uma) em vez de encher uma até o limite antes da outra. */
+function autoDistributeByArea() {
+  const statusEl = document.getElementById('ori-auto-status');
+  if (!orientations.length) return;
+
+  const remainingCap = {};
+  orientations.forEach(o => { const c = oriCapacityM2(o); remainingCap[o.id] = (c === null) ? Infinity : c; });
+
+  const norteOris = orientations.filter(o => o.isNorte);
+  const outrasOris = orientations.filter(o => !o.isNorte);
+
+  const evenModels = [];
+  mods.forEach(m => {
+    const totalQty = parseInt(m.qty) || 0;
+    if (!totalQty) return;
+    const pArea = panelAreaM2(m);
+    m.oriQty = {};
+
+    if (pArea === null) {
+      // sem dimensão do painel: não dá para calcular por área, mas Norte ainda tem prioridade
+      distributeAmong(m.oriQty, orientations.map(o => o.id), totalQty);
+      evenModels.push(m.name || m.id);
+      return;
+    }
+
+    let left = totalQty;
+
+    // 1) Orientações Norte primeiro, balanceadas entre si (water-filling).
+    if (norteOris.length) {
+      const norteIds = norteOris.map(o => o.id);
+      const capsById = {};
+      norteIds.forEach(id => { capsById[id] = (remainingCap[id] === Infinity) ? Infinity : Math.floor(remainingCap[id] / pArea); });
+      const alloc = fairSplitWithCaps(norteIds, capsById, left);
+      norteIds.forEach(id => {
+        const take = alloc[id];
+        if (take > 0) {
+          m.oriQty[id] = (m.oriQty[id] || 0) + take;
+          if (remainingCap[id] !== Infinity) remainingCap[id] -= take * pArea;
+          left -= take;
+        }
+      });
+    }
+
+    // 2) Demais orientações, na ordem listada, cada uma até o próprio teto.
+    const uncappedIds = [];
+    outrasOris.forEach(o => {
+      const cap = remainingCap[o.id];
+      if (cap === Infinity) { uncappedIds.push(o.id); return; }
+      if (left <= 0) return;
+      const maxFit = Math.floor(cap / pArea);
+      const take = Math.min(left, maxFit);
+      if (take > 0) {
+        m.oriQty[o.id] = take;
+        remainingCap[o.id] -= take * pArea;
+        left -= take;
+      }
+    });
+    if (left > 0 && uncappedIds.length) {
+      evenSplitInto(m.oriQty, uncappedIds, left);
+    }
+    // se ainda sobrar módulo aqui, nenhuma orientação tem espaço; a sobra
+    // fica sem orientação definida (mesmo tratamento de sempre em calcular()).
+  });
+
+  renderMods();
+  let msg = '<span style="color:var(--green)">✔ Distribuição por orientação aplicada.</span>';
+  if (evenModels.length) {
+    msg += '<br><span style="color:var(--t3)">△ Sem Comprimento/Largura do painel, <strong>' + evenModels.join(', ') +
+      '</strong> foi(ram) dividido(s) igualmente entre as orientações (sem checagem de área). Informe as dimensões do painel para calcular por área.</span>';
+  }
+  statusEl.innerHTML = msg;
+}
+
+/* ============================================================
+   IA — CHAVE/MODELO SALVOS NO LOCALSTORAGE
+   ============================================================ */
+function loadAISettings() {
+  document.getElementById('ai-key').value = localStorage.getItem('solardim_ai_key') || '';
+  document.getElementById('ai-model').value = localStorage.getItem('solardim_ai_model') || 'gpt-4o-mini';
+}
+function saveAISettings() {
+  localStorage.setItem('solardim_ai_key', document.getElementById('ai-key').value.trim());
+  localStorage.setItem('solardim_ai_model', document.getElementById('ai-model').value.trim());
+}
+function toggleKeyVisibility() {
+  const el = document.getElementById('ai-key');
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+/* ============================================================
+   PDF → TEXTO (extração local via pdf.js, nada é enviado
+   a servidor nenhum nesta etapa)
+   ============================================================ */
+async function extractPdfText(file) {
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let text = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    text += content.items.map(it => it.str).join(' ') + '\n';
+  }
+  return text.trim();
+}
+
+async function handlePdfUpload(input) {
+  const statusEl = document.getElementById('ai-status');
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+
+  if (!window.pdfjsLib) {
+    statusEl.innerHTML = '<span style="color:var(--red)">Biblioteca de leitura de PDF não carregou (verifique a conexão com a internet).</span>';
+    return;
+  }
+
+  statusEl.innerHTML = '<span style="color:var(--t3)">Lendo PDF(s)...</span>';
+  let anyEmpty = false;
+
+  for (const file of files) {
+    try {
+      const text = await extractPdfText(file);
+      if (text.length < 20) anyEmpty = true;
+      pdfCnt++;
+      pdfAttachments.push({ id: 'p' + pdfCnt, name: file.name, text });
+    } catch (err) {
+      statusEl.innerHTML = '<span style="color:var(--red)">Erro ao ler ' + file.name + ': ' + (err.message || err) + '</span>';
+      input.value = '';
+      renderPdfList();
+      return;
+    }
+  }
+
+  input.value = '';
+  renderPdfList();
+  statusEl.innerHTML = anyEmpty
+    ? '<span style="color:var(--amber)">△ PDF anexado, mas pouco texto foi encontrado em algum arquivo — pode ser um PDF escaneado (imagem). Complete manualmente na caixa de texto se precisar.</span>'
+    : '<span style="color:var(--green)">✔ PDF(s) anexado(s). Pode anexar mais datasheets ou clicar em "Preencher com IA".</span>';
+}
+
+function removePdf(id) {
+  pdfAttachments = pdfAttachments.filter(x => x.id !== id);
+  renderPdfList();
+}
+
+function renderPdfList() {
+  const el = document.getElementById('pdf-list');
+  if (!pdfAttachments.length) { el.innerHTML = ''; return; }
+  el.innerHTML = pdfAttachments.map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--s3);border:1px solid var(--border);border-radius:var(--rs);padding:6px 10px;margin-bottom:6px;">
+      <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escAttr(p.name)}">📄 ${escAttr(p.name)}</span>
+      <button type="button" class="btn-rm" onclick="removePdf('${p.id}')">✕</button>
+    </div>`).join('');
+}
+
+const AI_SYSTEM_PROMPT = `Você é um assistente que extrai dados tecnicos de dimensionamento fotovoltaico a partir de texto livre (datasheets colados e/ou instrucoes do usuario sobre quantidades e modelos).
+
+Retorne SOMENTE um JSON valido, sem comentarios e sem markdown, no formato:
+
+{
+  "inverters": [
+    { "name": string, "quantidade": number, "vmax": number|null, "vstart": number|null, "imax": number|null, "pmax_kw": number|null, "pnom_ca_kw": number|null, "nmppt": number|null, "entradas_por_mppt": number|null }
+  ],
+  "modules": [
+    { "name": string, "qty": number|null, "wp": number|null, "voc": number|null, "isc": number|null, "comprimento_mm": number|null, "largura_mm": number|null }
+  ],
+  "orientations": [
+    { "name": string|null, "area_m2": number|null }
+  ]
+}
+
+Regras de mapeamento:
+- vmax = tensao maxima de entrada CC do inversor (V), tambem chamada "max. DC input voltage" ou "tensao CC max.".
+- vstart = tensao de partida/start (V), tambem chamada "startup voltage" ou "tensao de arranque".
+- imax = corrente MAXIMA (nao a nominal/rated) de entrada por MPPT (A), tambem chamada "corrente max. por MPPT", "max. input current per MPPT" ou "max. short-circuit current per MPPT". Datasheets frequentemente listam DOIS valores de corrente para o MPPT: um nominal/rated (menor) e um maximo/short-circuit (maior). Use SEMPRE o valor MAIOR dos dois — e o que limita quantas strings podem ser ligadas em paralelo com seguranca. Nunca use o valor nominal/rated aqui.
+- pmax_kw = potencia FV (DC) MAXIMA RECOMENDADA/permitida na entrada do inversor (kW), tambem chamada "max. DC input power", "max. PV input power" ou "potencia FV max.". So preencha este campo se o datasheet declarar EXPLICITAMENTE esse valor de entrada CC. NUNCA copie aqui a potencia nominal CA (saida) do inversor — se so existir a potencia nominal CA, deixe pmax_kw como null.
+- pnom_ca_kw = potencia nominal CA (saida, kW) do inversor, tambem chamada "rated AC power", "potencia nominal" ou "potencia ativa nominal". Extraia sempre que encontrada, mesmo que pmax_kw tambem exista.
+- nmppt = numero de MPPTs do inversor.
+- entradas_por_mppt = numero de entradas (strings) por MPPT.
+- quantidade = quantas unidades fisicas desse inversor o usuario quer usar (padrao 1 se nao especificado).
+- Para modulos: wp = potencia nominal (W), voc = tensao de circuito aberto (V), isc = corrente de curto-circuito (A), qty = quantidade de modulos desse modelo que o usuario quer usar.
+- comprimento_mm = maior dimensao fisica do modulo (mm), tambem chamada "length" ou "comprimento" no datasheet (ex: em "2278x1134x30mm" o comprimento e 2278).
+- largura_mm = menor dimensao fisica do modulo (mm), tambem chamada "width" ou "largura" no datasheet (ex: em "2278x1134x30mm" a largura e 1134).
+- Se um valor nao for encontrado no texto, use null (nunca invente nem calcule valores).
+- Se houver multiplos modelos de inversor ou de modulo no texto, crie uma entrada para cada um.
+- orientations = lista de orientacoes/aguas de telhado. Preencha esta lista SOMENTE quando o usuario mencionar EXPLICITAMENTE que a instalacao tem MAIS DE UMA orientacao/agua de telhado (ex: "tem duas orientacoes", "parte no telhado norte e parte no sul", "duas aguas", "3 orientacoes diferentes"). Cada item pode trazer "name" (nome da orientacao, ou null se o usuario nao deu nome) e "area_m2" (area em m2 dessa orientacao — OPCIONAL, use null se o usuario nao informou a area; nao e obrigatorio informar area para ter orientacao). Se o usuario NAO mencionar orientacao, ou disser explicitamente que so ha uma orientacao/agua/telhado unico, retorne "orientations" como lista VAZIA — nesse caso o calculo NAO deve dividir os MPPTs por orientacao, segue o modo padrao (telhado unico).`;
+
+async function analyzeWithAI() {
+  const statusEl = document.getElementById('ai-status');
+  const btn = document.getElementById('ai-btn');
+  const key = document.getElementById('ai-key').value.trim();
+  const model = document.getElementById('ai-model').value.trim() || 'gpt-4o-mini';
+  const manualText = document.getElementById('ai-text').value.trim();
+  const pdfText = pdfAttachments.map(p => `--- ${p.name} ---\n${p.text}`).join('\n\n');
+  const text = [manualText, pdfText].filter(Boolean).join('\n\n');
+  saveAISettings();
+
+  if (!key)  { statusEl.innerHTML = '<span style="color:var(--red)">Informe sua chave de API da OpenAI.</span>'; return; }
+  if (!text) { statusEl.innerHTML = '<span style="color:var(--red)">Cole o texto e/ou anexe ao menos um datasheet antes de analisar.</span>'; return; }
+
+  btn.disabled = true;
+  statusEl.innerHTML = '<span style="color:var(--t3)">Analisando com IA...</span>';
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: AI_SYSTEM_PROMPT },
+          { role: 'user', content: text }
+        ]
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error?.message || ('Erro HTTP ' + res.status));
+
+    let raw = (data.choices?.[0]?.message?.content || '').trim();
+    raw = raw.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```$/, '').trim();
+    const parsed = JSON.parse(raw);
+    const estimated = applyAIResult(parsed);
+    let msg = '<span style="color:var(--green)">✔ Campos preenchidos com sucesso.</span>';
+    if (estimated.length) {
+      msg += '<br><span style="color:var(--amber)">△ Potência CC máxima não veio explícita no datasheet para: <strong>' +
+        estimated.join(', ') + '</strong> — foi estimada em +30% sobre a potência nominal CA. Essa proporção varia MUITO entre modelos (às vezes é +100% ou mais), então confira no datasheet e ajuste o campo "Potência Máx. CC" do inversor se precisar.</span>';
+    }
+    statusEl.innerHTML = msg;
+  } catch (err) {
+    statusEl.innerHTML = '<span style="color:var(--red)">Erro: ' + (err.message || err) + '</span>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function applyAIResult(parsed) {
+  const estimated = [];
+  (parsed.inverters || []).forEach(inv => {
+    invCnt++;
+    let pmaxKw = (inv.pmax_kw !== null && inv.pmax_kw !== undefined) ? inv.pmax_kw : null;
+    if (pmaxKw === null && inv.pnom_ca_kw) {
+      pmaxKw = +(inv.pnom_ca_kw * 1.3).toFixed(2);
+      estimated.push(inv.name || ('Inversor ' + invCnt));
+    }
+    invs.push({
+      id: 'i' + invCnt,
+      name: inv.name || '',
+      qty: inv.quantidade || 1,
+      vmax: inv.vmax ?? '',
+      vstart: inv.vstart ?? '',
+      imax: inv.imax ?? '',
+      pmax: pmaxKw ?? '',
+      nmppt: inv.nmppt ?? '',
+      ent: inv.entradas_por_mppt ?? ''
+    });
+  });
+  renderInvs();
+
+  (parsed.modules || []).forEach(m => {
+    modCnt++;
+    mods.push({
+      id: 'm' + modCnt,
+      name: m.name || '',
+      qty: m.qty ?? '',
+      wp: m.wp ?? '',
+      voc: m.voc ?? '',
+      isc: m.isc ?? '',
+      comp: m.comprimento_mm ?? '',
+      larg: m.largura_mm ?? '',
+      oriQty: {}
+    });
+  });
+
+  /* Orientações só são criadas quando a IA detecta explicitamente mais de
+     uma no texto do usuário; caso contrário a lista fica vazia e o
+     cálculo segue no modo padrão (telhado único), sem dividir MPPTs. */
+  const oriList = Array.isArray(parsed.orientations) ? parsed.orientations : [];
+  if (oriList.length >= 2) {
+    oriList.forEach(o => {
+      oriCnt++;
+      const name = (o.name || '').trim() || ('Orientação ' + oriCnt);
+      orientations.push({ id: 'o' + oriCnt, name, area: o.area_m2 ?? '', util: '', isNorte: /norte/i.test(name) });
+    });
+  }
+
+  renderOris();
+  renderMods();
+  if (orientations.length) autoDistributeByArea();
+
+  if (invs.length && mods.length) calcular();
+  return estimated;
+}
+
+/* ============================================================
+   LEITURA DOS DADOS
+   ============================================================ */
+function readInverters() {
+  return invs.map(inv => {
+    const vmax   = parseFloat(inv.vmax);
+    const vstart = parseFloat(inv.vstart);
+    const imax   = parseFloat(inv.imax);
+    const pmax   = parseFloat(inv.pmax) * 1000;
+    const nmppt  = parseInt(inv.nmppt);
+    const ent    = parseInt(inv.ent);
+    const qty    = parseInt(inv.qty) || 1;
+    const vmin   = vstart > 0 ? vstart * 1.5 : 0;
+    const vnom   = vmax * 0.6;
+    const vlim   = vmax * 0.85;
+    return { id: inv.id, name: (inv.name||'').trim() || ('Inversor '+inv.id.replace('i','')), qty, vmax, vstart, imax, pmax, nmppt, ent, vmin, vnom, vlim };
+  });
+}
+function readModules() {
+  return mods.map(m => ({
+    id: m.id,
+    name: (m.name||'').trim() || ('Módulo ' + m.id.replace('m', '')),
+    qty:  parseInt(m.qty),
+    wp:   parseFloat(m.wp),
+    voc:  parseFloat(m.voc),
+    isc:  parseFloat(m.isc),
+    comp: parseFloat(m.comp),
+    larg: parseFloat(m.larg),
+    oriQty: m.oriQty || {},
+  })).filter(m => m.qty > 0 && m.wp > 0 && m.voc > 0 && m.isc > 0 &&
+    !isNaN(m.qty) && !isNaN(m.wp) && !isNaN(m.voc) && !isNaN(m.isc));
+}
+
+/* ============================================================
+   FIND BEST STRING SIZE  →  nearest to vnom, prefer even
+   ============================================================ */
+function bestStringSize(voc, vnom, vlim, vmin) {
+  const floor = vmin > 0 ? vmin : 1;
+  const minN  = Math.ceil(floor / voc);
+  const maxN  = Math.floor(vlim / voc);
+
+  if (minN > maxN || maxN < 1) return 0;
+
+  let best = 0, bestDist = Infinity;
+  for (let n = minN; n <= maxN; n++) {
+    const vtot = n * voc;
+    if (vtot < floor || vtot > vlim) continue;
+    const dist = Math.abs(vtot - vnom);
+    if (dist < bestDist || (dist === bestDist && n % 2 === 0 && best % 2 !== 0)) {
+      bestDist = dist;
+      best     = n;
+    }
+  }
+  return best;
+}
+
+/* ============================================================
+   Nº DE STRINGS EM PARALELO POR MPPT — limitado pelo nº físico
+   de entradas do MPPT (inv.ent) E pela corrente (o Isc combinado
+   das strings em paralelo não pode ultrapassar o Imax do MPPT).
+   Antes o código só considerava até 2 strings (A/B); agora usa
+   o valor real de "Entradas por MPPT" (até 4).
+   ============================================================ */
+function computeNParallel(inv, mod) {
+  const maxByCurrent = Math.floor(inv.imax / mod.isc);
+  return Math.max(1, Math.min(inv.ent, maxByCurrent));
+}
+
+/* ============================================================
+   PREENCHIMENTO PARCIAL DE ATÉ N STRINGS EM PARALELO — usado
+   quando a cota restante não enche todas as strings no tamanho
+   nominal. Distribui os módulos entre 1..nParallel strings da
+   forma mais equilibrada possível (diferença máx. de 1 módulo
+   entre strings do mesmo MPPT), preferindo o menor nº de strings
+   em caso de empate (mesma sobra e mesma distância da nominal).
+   ============================================================ */
+function bestPartialFill(quotaLeft, nParallel, inv, mod) {
+  const floor     = inv.vmin > 0 ? inv.vmin : 1;
+  const minPerStr = Math.ceil(floor / mod.voc);
+  const maxPerStr = Math.floor(inv.vlim / mod.voc);
+
+  let best = null;
+  for (let p = 1; p <= nParallel; p++) {
+    const used  = Math.min(quotaLeft, p * maxPerStr);
+    const base  = Math.floor(used / p);
+    if (base < minPerStr) continue;
+    const extra = used - base * p;
+    const sobra = quotaLeft - used;
+    const dist  = Math.abs(base * mod.voc - inv.vnom);
+    if (!best || sobra < best.sobra || (sobra === best.sobra && dist < best.dist)) {
+      const sizes = [];
+      for (let i = 0; i < p; i++) sizes.push(i < extra ? base + 1 : base);
+      best = { sizes, sobra, dist };
+    }
+  }
+  return best ? best.sizes : null;
+}
+
+/* ============================================================
+   REFINA O TAMANHO DE STRING PARA ELIMINAR SOBRA, SEM SE
+   AFASTAR DA NOMINAL MAIS DO QUE O DOBRO DA DISTÂNCIA ORIGINAL
+   (correção do bug: essa tolerância antes era só um comentário
+   e nunca era aplicada no código).
+   ============================================================ */
+function refineStringSize(ssBase, mod, remaining, inv) {
+  if (ssBase === 0) return 0;
+  const floor = inv.vmin > 0 ? inv.vmin : 1;
+  const minN  = Math.ceil(floor / mod.voc);
+  const maxN  = Math.floor(inv.vlim / mod.voc);
+  const baseDist = Math.abs(ssBase * mod.voc - inv.vnom);
+  const nParallel = computeNParallel(inv, mod);
+  const modsPerMpptBase = ssBase * nParallel;
+  const leftoverBase = remaining % modsPerMpptBase;
+  if (leftoverBase === 0) return ssBase;
+
+  const spread = Math.max(ssBase - minN, maxN - ssBase);
+  let bestAltDist = Infinity, bestAlt = 0;
+  for (let delta = 1; delta <= spread; delta++) {
+    for (const d of [delta, -delta]) {
+      const candidate = ssBase + d;
+      if (candidate < minN || candidate > maxN) continue;
+      const candV = candidate * mod.voc;
+      if (candV < floor || candV > inv.vlim) continue;
+      const modsPerMpptCand = candidate * nParallel;
+      const leftoverCand = remaining % modsPerMpptCand;
+      if (leftoverCand === 0) {
+        const candDist = Math.abs(candV - inv.vnom);
+        if (candDist > baseDist * 2) continue;
+        if (candDist < bestAltDist) { bestAltDist = candDist; bestAlt = candidate; }
+      }
+    }
+  }
+  return bestAlt > 0 ? bestAlt : ssBase;
+}
+
+/* ============================================================
+   ALOCAÇÃO MANUAL — depois do cálculo automático, cada célula de
+   String na tabela de resultado é editável: dá pra aumentar módulos
+   num MPPT e diminuir em outro (ou testar qualquer outro arranjo
+   válido), com Voc/Isc/Potência recalculados na hora. `lastRows` e
+   `lastInverters` guardam o estado atual (editado ou não) para que
+   os recálculos não dependam de rodar o algoritmo de novo.
+   ============================================================ */
+let lastRows = [];
+let lastInverters = [];
+let lastOriActive = false;
+let currentMaxStrings = 1;
+let lastPool = {};
+let moveCtx = null;
+
+function recomputeRow(r) {
+  const active = r.strings.filter(n => n > 0);
+  const maxSize = active.length ? Math.max(...active) : 0;
+  r.vocTot = maxSize * r.voc;
+  r.iscTot = r.isc * active.length;
+  r.wTot   = active.reduce((a, b) => a + b, 0) * r.wp;
+  r.delta  = r.vocTot - r.vnom;
+}
+
+function computeRowWarnings(rows) {
+  const w = [];
+  rows.forEach(r => {
+    const tag = `"${r.model}" — ${r.invName}${r.unitTotal > 1 ? ' (Unid. ' + r.unit + ')' : ''} MPPT ${r.mpptInUnit}`;
+    if (r.vocTot > r.vmax) w.push(`⚠ ${tag}: Voc total (${r.vocTot.toFixed(1)} V) EXCEDE Vmax (${r.vmax} V). Risco de dano ao inversor!`);
+    if (r.iscTot > r.imax) w.push(`⚠ ${tag}: Isc total (${r.iscTot.toFixed(2)} A) EXCEDE Imax (${r.imax} A). Risco de sobrecorrente!`);
+    const active = r.strings.filter(n => n > 0);
+    if (active.length > 1 && (Math.max(...active) - Math.min(...active)) > 1)
+      w.push(`△ ${tag}: mismatch entre strings paralelas maior que 1 módulo (${active.join(' / ')}).`);
+  });
+  return w;
+}
+
+/* Gera o <tr> de uma linha da tabela de resultado. Reaproveitado tanto
+   na montagem inicial (calcular()) quanto na troca manual de modelo
+   (changeRowModel()), que só substitui esta linha sem refazer a tabela
+   inteira. Depende de currentMaxStrings/lastOriActive (globais). */
+function rowHtml(r, rowIdx) {
+  const deltaStr = r.delta >= 0
+    ? `<span class="ok-delta">+${r.delta.toFixed(1)} V</span>`
+    : `<span class="bad-delta">${r.delta.toFixed(1)} V</span>`;
+  let stringCells = '';
+  for (let i = 0; i < currentMaxStrings; i++) {
+    const v = r.strings[i] || '';
+    stringCells += `<td><input class="str-input" id="rs-${rowIdx}-${i}" type="number" min="0" step="1" value="${v}" data-prev="${v || 0}" placeholder="—" oninput="liveUpdateRow(${rowIdx})" onfocus="this.dataset.prev=this.value||'0'" onchange="handleStringCommit(${rowIdx},${i})"></td>`;
+  }
+  const oriCell = lastOriActive
+    ? `<td>${r.orientation ? `<span class="mppt-tag" style="background:var(--amber-l);color:var(--amber);border-color:#fde68a">${r.orientation}</span>` : '<span style="color:var(--t3)">—</span>'}</td>`
+    : '';
+  const minPerStr = Math.ceil((r.vmin > 0 ? r.vmin : 1) / r.voc);
+  const maxPerStr = Math.floor(r.vlim / r.voc);
+  const rangeTitle = `Faixa válida por string neste MPPT: ${minPerStr}–${maxPerStr} módulos (Vmin ${r.vmin.toFixed(0)} V .. Vlim ${r.vlim.toFixed(0)} V). Edite os campos ao lado para testar outros arranjos.`;
+  return `<tr id="tr-${rowIdx}">
+    <td class="tn">${r.invName}${r.unitTotal>1?' · U'+r.unit:''}</td>
+    <td><span class="mppt-tag" title="${escAttr(rangeTitle)}">MPPT ${r.mpptInUnit}</span></td>
+    ${oriCell}
+    <td><select class="str-input" style="width:150px;text-align:left" onchange="changeRowModel(${rowIdx}, this.value)">${modelOptionsHtml(r.model)}</select></td>
+    ${stringCells}
+    <td class="tv" id="rv-${rowIdx}">${r.vocTot.toFixed(1)} V</td>
+    <td class="tdelta" id="rd-${rowIdx}">${deltaStr}</td>
+    <td class="ti" id="ri-${rowIdx}">${r.iscTot.toFixed(2)} A</td>
+    <td class="tw" id="rp-${rowIdx}">${(r.wTot/1000).toFixed(3)} kWp</td>
+  </tr>`;
+}
+
+function computeAggregates(rows, inverters) {
+  const invStats = inverters.map(inv => ({
+    id: inv.id, name: inv.name, qty: inv.qty,
+    capTotal: inv.pmax * inv.qty, pwrUsed: 0,
+    slotsTotal: inv.nmppt * inv.qty, slotsUsed: 0, modsUsed: 0
+  }));
+  const seenSlots = new Set();
+  let totalMods = 0, totalPwr = 0;
+  rows.forEach(r => {
+    const nTot = r.strings.reduce((a, b) => a + (b > 0 ? b : 0), 0);
+    totalMods += nTot; totalPwr += r.wTot;
+    const st = invStats[r.invIdx];
+    if (!st) return;
+    st.pwrUsed += r.wTot;
+    st.modsUsed += nTot;
+    const key = r.invIdx + '|' + r.unit + '|' + r.mpptInUnit;
+    if (!seenSlots.has(key)) { seenSlots.add(key); st.slotsUsed++; }
+  });
+  return { invStats, totalMods, totalPwr };
+}
+
+/* Atualiza só as células de Voc/Δ/Isc/Potência de UMA linha (a partir do
+   que já estiver em lastRows[rowIdx]), sem tocar nos inputs de String —
+   usado tanto pela digitação ao vivo quanto após uma transferência entre
+   MPPTs feita pelo modal. */
+function updateRowDom(rowIdx) {
+  const r = lastRows[rowIdx];
+  if (!r) return;
+  const vocEl = document.getElementById('rv-' + rowIdx);
+  const deltaEl = document.getElementById('rd-' + rowIdx);
+  const iscEl = document.getElementById('ri-' + rowIdx);
+  const pwrEl = document.getElementById('rp-' + rowIdx);
+  if (vocEl) {
+    vocEl.textContent = r.vocTot.toFixed(1) + ' V';
+    vocEl.style.color = r.vocTot > r.vmax ? 'var(--red)' : '';
+    vocEl.style.fontWeight = r.vocTot > r.vmax ? '700' : '';
+  }
+  if (deltaEl) {
+    deltaEl.innerHTML = r.delta >= 0
+      ? `<span class="ok-delta">+${r.delta.toFixed(1)} V</span>`
+      : `<span class="bad-delta">${r.delta.toFixed(1)} V</span>`;
+  }
+  if (iscEl) {
+    iscEl.textContent = r.iscTot.toFixed(2) + ' A';
+    iscEl.style.color = r.iscTot > r.imax ? 'var(--red)' : '';
+    iscEl.style.fontWeight = r.iscTot > r.imax ? '700' : '';
+  }
+  if (pwrEl) pwrEl.textContent = (r.wTot / 1000).toFixed(3) + ' kWp';
+}
+
+/* Roda a cada tecla digitada numa célula de String: só toca nas
+   células de Voc/Δ/Isc/Potência DAQUELA linha via DOM direto — nunca
+   reconstrói a tabela, senão o input perderia o foco a cada dígito. */
+function liveUpdateRow(rowIdx) {
+  const r = lastRows[rowIdx];
+  if (!r) return;
+  const strings = [];
+  for (let i = 0; i < currentMaxStrings; i++) {
+    const el = document.getElementById('rs-' + rowIdx + '-' + i);
+    const v = el ? parseInt(el.value) : NaN;
+    strings.push((!isNaN(v) && v > 0) ? v : 0);
+  }
+  r.strings = strings;
+  recomputeRow(r);
+  updateRowDom(rowIdx);
+}
+
+/* Roda quando o campo perde o foco (Tab/clique fora/Enter): além do
+   recálculo da linha, atualiza cartões de estatística, balanço por
+   inversor, gráficos, narrativa e alertas com o estado manual atual. */
+function commitRowEdit(rowIdx) {
+  liveUpdateRow(rowIdx);
+  refreshAggregates();
+}
+
+/* Roda no onchange de uma célula de String: se o valor DIMINUIU, os
+   módulos liberados voltam pro estoque do modelo sem perguntar nada.
+   Se AUMENTOU, sempre abre o modal pra escolher de onde tirar (estoque
+   não alocado ou outro MPPT do mesmo modelo) — nunca cria módulo do
+   nada silenciosamente. */
+function handleStringCommit(rowIdx, stringIdx) {
+  const el = document.getElementById('rs-' + rowIdx + '-' + stringIdx);
+  if (!el) return;
+  const prev = parseInt(el.dataset.prev) || 0;
+  const now = parseInt(el.value) || 0;
+  el.dataset.prev = String(now);
+
+  if (now === prev) { commitRowEdit(rowIdx); return; }
+
+  if (now < prev) {
+    const r = lastRows[rowIdx];
+    if (lastPool[r.model]) lastPool[r.model].remaining += (prev - now);
+    commitRowEdit(rowIdx);
+    return;
+  }
+
+  openMoveModal(rowIdx, stringIdx, now - prev);
+}
+
+function modelOptionsHtml(currentModel) {
+  return Object.keys(lastPool).map(name => {
+    const p = lastPool[name];
+    const sel = name === currentModel ? 'selected' : '';
+    return `<option value="${escAttr(name)}" ${sel}>${escAttr(name)} (${Math.max(0, Math.floor(p.remaining))} livres)</option>`;
+  }).join('');
+}
+
+/* Troca o modelo alocado neste MPPT: devolve os módulos atuais pro
+   estoque do modelo antigo, zera as strings (o usuário digita de novo,
+   puxando do estoque/de outro MPPT do novo modelo pela mesma lógica de
+   handleStringCommit) e re-renderiza só esta linha da tabela. */
+function changeRowModel(rowIdx, newModelName) {
+  const r = lastRows[rowIdx];
+  if (!r || !lastPool[newModelName] || newModelName === r.model) return;
+  const oldTotal = r.strings.reduce((a, b) => a + (b > 0 ? b : 0), 0);
+  if (lastPool[r.model]) lastPool[r.model].remaining += oldTotal;
+
+  const nm = lastPool[newModelName];
+  r.model = newModelName;
+  r.voc = nm.voc; r.isc = nm.isc; r.wp = nm.wp;
+  r.strings = r.strings.map(() => 0);
+  recomputeRow(r);
+
+  const trEl = document.getElementById('tr-' + rowIdx);
+  if (trEl) trEl.outerHTML = rowHtml(r, rowIdx);
+  refreshAggregates();
+}
+
+/* ============================================================
+   MODAL — escolher de onde tirar módulos ao aumentar um MPPT
+   ============================================================ */
+function openMoveModal(rowIdx, stringIdx, delta) {
+  const r = lastRows[rowIdx];
+  const el = document.getElementById('rs-' + rowIdx + '-' + stringIdx);
+  moveCtx = { rowIdx, stringIdx, delta, el };
+
+  const pool = lastPool[r.model];
+  const poolAvail = pool ? Math.max(0, Math.floor(pool.remaining)) : 0;
+
+  const candidates = [];
+  lastRows.forEach((other, idx) => {
+    if (idx === rowIdx || other.model !== r.model) return;
+    other.strings.forEach((v, si) => {
+      if (v > 0) candidates.push({
+        rowIdx: idx, stringIdx: si, avail: v,
+        label: `${other.invName}${other.unitTotal > 1 ? ' U' + other.unit : ''} · MPPT ${other.mpptInUnit} · String ${String.fromCharCode(65 + si)} (${v} módulos)`
+      });
+    });
+  });
+
+  let html = `<p style="font-size:13px;color:var(--t2);margin-bottom:12px;">Você quer adicionar <strong>${delta} módulo(s)</strong> de "<strong>${escAttr(r.model)}</strong>" no MPPT ${r.mpptInUnit} (String ${String.fromCharCode(65 + stringIdx)}). De onde tirar?</p>`;
+
+  if (poolAvail > 0) {
+    html += `<label style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;">
+      <input type="radio" name="move-src" value="pool" checked>
+      Estoque não alocado deste modelo (<strong>${poolAvail}</strong> disponível)
+    </label>`;
+  }
+  candidates.forEach((c, i) => {
+    html += `<label style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;">
+      <input type="radio" name="move-src" value="row:${c.rowIdx}:${c.stringIdx}" ${(!poolAvail && i === 0) ? 'checked' : ''}>
+      ${c.label}
+    </label>`;
+  });
+  if (!poolAvail && !candidates.length) {
+    html += `<p style="font-size:13px;color:var(--amber);margin:10px 0;">△ Não há estoque livre nem outro MPPT com este modelo para tirar módulos.</p>`;
+  }
+  html += `<div style="display:flex;gap:8px;margin-top:16px;">
+    <button class="btn-add" style="flex:1" onclick="closeMoveModal(true)">Cancelar</button>
+    <button class="btn-calc" style="flex:1;margin-top:0" onclick="confirmMove()">Confirmar</button>
+  </div>
+  <div style="margin-top:10px;text-align:center;">
+    <a href="#" onclick="forceIncrease();return false;" style="font-size:11px;color:var(--t3);text-decoration:underline;">Aumentar mesmo assim, sem tirar de lugar nenhum</a>
+  </div>`;
+
+  document.getElementById('move-body').innerHTML = html;
+  document.getElementById('move-overlay').style.display = 'flex';
+}
+
+function closeMoveModal(revert) {
+  document.getElementById('move-overlay').style.display = 'none';
+  if (revert && moveCtx) {
+    moveCtx.el.value = moveCtx.el.dataset.prev || '';
+    liveUpdateRow(moveCtx.rowIdx);
+  }
+  moveCtx = null;
+}
+
+function confirmMove() {
+  if (!moveCtx) return;
+  const checked = document.querySelector('input[name="move-src"]:checked');
+  if (!checked) { alert('Selecione de onde tirar os módulos.'); return; }
+  const { rowIdx, delta } = moveCtx;
+  const r = lastRows[rowIdx];
+
+  if (checked.value === 'pool') {
+    const pool = lastPool[r.model];
+    const take = Math.min(delta, pool ? pool.remaining : 0);
+    if (pool) pool.remaining -= take;
+    if (take < delta) {
+      alert(`Só havia ${take} módulo(s) no estoque não alocado; o restante (${delta - take}) precisa vir de outro MPPT. Escolha novamente.`);
+      openMoveModal(rowIdx, moveCtx.stringIdx, delta);
+      return;
+    }
+  } else {
+    const [, srcRowIdxStr, srcStringIdxStr] = checked.value.split(':');
+    const srcRowIdx = parseInt(srcRowIdxStr), srcStringIdx = parseInt(srcStringIdxStr);
+    const srcRow = lastRows[srcRowIdx];
+    const srcVal = srcRow.strings[srcStringIdx] || 0;
+    if (srcVal < delta) { alert(`Esse MPPT só tem ${srcVal} módulo(s) — não dá pra tirar ${delta}.`); return; }
+    srcRow.strings[srcStringIdx] = srcVal - delta;
+    recomputeRow(srcRow);
+    const srcEl = document.getElementById('rs-' + srcRowIdx + '-' + srcStringIdx);
+    if (srcEl) { srcEl.value = srcRow.strings[srcStringIdx] || ''; srcEl.dataset.prev = String(srcRow.strings[srcStringIdx] || 0); }
+    updateRowDom(srcRowIdx);
+  }
+
+  document.getElementById('move-overlay').style.display = 'none';
+  liveUpdateRow(rowIdx);
+  refreshAggregates();
+  moveCtx = null;
+}
+
+function forceIncrease() {
+  if (!moveCtx) return;
+  document.getElementById('move-overlay').style.display = 'none';
+  commitRowEdit(moveCtx.rowIdx);
+  moveCtx = null;
+}
+
+function refreshAggregates() {
+  const { invStats, totalMods, totalPwr } = computeAggregates(lastRows, lastInverters);
+  const totalInvCapAll = invStats.reduce((s, x) => s + x.capTotal, 0);
+  const mpptUsedTotal  = invStats.reduce((s, x) => s + x.slotsUsed, 0);
+  const mpptTotalAll   = invStats.reduce((s, x) => s + x.slotsTotal, 0);
+  const ovPct = totalInvCapAll > 0 ? (totalPwr / totalInvCapAll * 100) : 0;
+
+  buildInvBalance(invStats);
+  buildInvProgress(invStats);
+  document.getElementById('s-mod').textContent = totalMods;
+  document.getElementById('s-pwr').innerHTML = (totalPwr / 1000).toFixed(2) + '<span class="su">kWp</span>';
+  document.getElementById('s-mpp').textContent = mpptUsedTotal + ' / ' + mpptTotalAll;
+  document.getElementById('s-ovl').innerHTML = ovPct.toFixed(1) + '<span class="su">%</span>';
+
+  /* O rótulo "(N livres)" de cada seletor de modelo depende do estoque
+     (lastPool), que qualquer linha pode alterar — atualiza todos para
+     não ficarem desatualizados só porque a edição foi noutra linha. */
+  lastRows.forEach((r, idx) => {
+    const selEl = document.querySelector('#tr-' + idx + ' select');
+    if (selEl) selEl.innerHTML = modelOptionsHtml(r.model);
+  });
+
+  buildCharts(lastRows);
+  const rowWarnings = computeRowWarnings(lastRows);
+  buildNarr(lastInverters, lastRows, totalMods, totalPwr, invStats, rowWarnings);
+
+  const alertsEl = document.getElementById('alerts');
+  alertsEl.innerHTML = '';
+  if (totalPwr > totalInvCapAll) {
+    pushAlerts(alertsEl, [{ type: 'err', msg: `<strong>ERRO: LIMITE DE OVERLOAD EXCEDIDO</strong> após edição manual — potência total (${(totalPwr/1000).toFixed(2)} kWp) excede a capacidade CC dos inversores (${(totalInvCapAll/1000).toFixed(1)} kW).` }]);
+  }
+  if (rowWarnings.length) pushAlerts(alertsEl, rowWarnings.map(m => ({ type: 'warn', msg: m })));
+  pushAlerts(alertsEl, [{ type: 'ok', msg: `Alocação manual atualizada: <strong>${lastRows.length} MPPT(s)</strong> — <strong>${totalMods} módulos</strong> — <strong>${(totalPwr/1000).toFixed(2)} kWp</strong>.` }]);
+}
+
+/* ============================================================
+   MAIN CALC — em cascata: cada inversor consome o que consegue
+   de cada modelo; o que sobra passa para o próximo inversor.
+   ============================================================ */
+function calcular() {
+  closeMoveModal(false); // fecha o modal de transferência se ficou aberto de uma edição anterior
+  const alertsEl = document.getElementById('alerts');
+  const emptyEl  = document.getElementById('empty');
+  const resWrap  = document.getElementById('result-wrap');
+  alertsEl.innerHTML = '';
+
+  const inverters = readInverters();
+  const modulesRaw = readModules();
+
+  const errs = [];
+  if (!inverters.length) errs.push('Adicione pelo menos um inversor.');
+  inverters.forEach((inv, i) => {
+    if (isNaN(inv.vmax)   || inv.vmax   <= 0) errs.push(`Inversor ${i+1}: informe a Tensão Máxima CC (Vmax).`);
+    if (isNaN(inv.vstart) || inv.vstart <= 0) errs.push(`Inversor ${i+1}: informe a Tensão de Start (Vstart).`);
+    if (isNaN(inv.imax)   || inv.imax   <= 0) errs.push(`Inversor ${i+1}: informe a Isc Máx. por MPPT.`);
+    if (isNaN(inv.pmax)   || inv.pmax   <= 0) errs.push(`Inversor ${i+1}: informe a Potência Máxima CC.`);
+    if (isNaN(inv.nmppt)  || inv.nmppt  <= 0) errs.push(`Inversor ${i+1}: informe a quantidade de MPPTs.`);
+    if (isNaN(inv.ent)    || inv.ent    <= 0) errs.push(`Inversor ${i+1}: informe o número de Entradas por MPPT.`);
+  });
+  if (!mods.length) errs.push('Adicione pelo menos um modelo de módulo.');
+  else if (!modulesRaw.length) errs.push('Preencha todos os campos dos módulos (Qtd, Wp, Voc, Isc).');
+
+  if (errs.length) {
+    pushAlerts(alertsEl, errs.map(e => ({ type:'err', msg: '• ' + e })));
+    emptyEl.style.display = 'block'; resWrap.style.display = 'none';
+    hide('charts-row','stats-row','narr'); return;
+  }
+
+  const totalCap = modulesRaw.reduce((s, m) => s + m.qty * m.wp, 0);
+  const totalInvCap = inverters.reduce((s, inv) => s + inv.pmax * inv.qty, 0);
+  if (totalCap > totalInvCap) {
+    pushAlerts(alertsEl, [{
+      type:'err',
+      msg: `<strong>ERRO: LIMITE DE OVERLOAD EXCEDIDO</strong><br>
+      Potência total dos módulos: <strong>${(totalCap/1000).toFixed(2)} kWp</strong> &gt;
+      Capacidade CC total dos inversores: <strong>${(totalInvCap/1000).toFixed(2)} kW</strong>.<br>
+      Reduza a quantidade de módulos, adicione mais inversores ou use inversores de maior potência.`
+    }]);
+    emptyEl.style.display = 'block'; resWrap.style.display = 'none';
+    hide('charts-row','stats-row','narr'); return;
+  }
+
+  /* Orientações de telhado (opcional): se houver ao menos uma cadastrada,
+     cada modelo é fatiado em sub-lotes por orientação (mais um lote "sem
+     orientação" com a sobra), e cada sub-lote vira sua própria entrada no
+     pool — assim, pela mesma regra que já impede dois modelos diferentes
+     de dividirem um MPPT, duas orientações diferentes também nunca dividem
+     o mesmo MPPT. Sem orientações cadastradas, comportamento idêntico ao
+     de antes. */
+  const oriActive = orientations.length > 0;
+  const oriCapWarnings = [];
+  let pool;
+  if (oriActive) {
+    pool = [];
+    const oriUsedArea = {};
+    orientations.forEach(o => { oriUsedArea[o.id] = 0; });
+    modulesRaw.forEach(m => {
+      const pArea = panelAreaM2(m);
+      let assignedSum = 0;
+      orientations.forEach(o => {
+        const q = parseInt(m.oriQty[o.id]) || 0;
+        if (q > 0) {
+          pool.push({ ...m, remaining: q, orientationId: o.id, orientationName: o.name || ('Orientação ' + o.id) });
+          assignedSum += q;
+          if (pArea !== null) oriUsedArea[o.id] += q * pArea;
+        }
+      });
+      if (assignedSum > m.qty) {
+        oriCapWarnings.push(`Módulo "<strong>${m.name}</strong>": a distribuição por orientação soma <strong>${assignedSum}</strong> módulos, mais do que a Quantidade Total informada (<strong>${m.qty}</strong>). Ajuste os valores.`);
+      }
+      const leftover = m.qty - assignedSum;
+      if (leftover > 0) pool.push({ ...m, remaining: leftover, orientationId: null, orientationName: null });
+    });
+    orientations.forEach(o => {
+      const cap = oriCapacityM2(o);
+      if (cap !== null && oriUsedArea[o.id] > cap + 1e-9) {
+        oriCapWarnings.push(`Orientação "<strong>${escAttr(o.name) || o.id}</strong>": os módulos atribuídos ocupam <strong>${oriUsedArea[o.id].toFixed(1)} m²</strong>, acima da área disponível (<strong>${cap.toFixed(1)} m²</strong>). Reduza a quantidade de módulos nessa orientação, aumente a área ou o aproveitamento.`);
+      }
+    });
+  } else {
+    pool = modulesRaw.map(m => ({ ...m, remaining: m.qty }));
+  }
+  const rows = [];
+  const warns = [];
+  const notAlloc = [];
+  let totalMods = 0, totalPwr = 0;
+
+  /* Estado corrido por inversor — persiste entre modelos, para que cada
+     modelo receba sua cota de cada inversor considerando o que os
+     modelos anteriores já ocuparam. */
+  const invState = inverters.map((inv, i) => ({ inv, i, totalSlots: inv.nmppt * inv.qty, slotIdx: 0, invPwr: 0, modsUsed: 0 }));
+
+  for (const mod of pool) {
+    if (mod.remaining <= 0) continue;
+
+    const avail = invState.filter(st => st.slotIdx < st.totalSlots);
+    if (!avail.length) continue;
+
+    /* Descarta inversores em que este modelo simplesmente não cabe
+       (Vmin/Vlim incompatíveis) antes de dividir a cota. */
+    const candidates = [];
+    avail.forEach(st => {
+      const inv = st.inv;
+      const ssBase = bestStringSize(mod.voc, inv.vnom, inv.vlim, inv.vmin);
+      if (ssBase === 0) {
+        const floorN = Math.ceil((inv.vmin > 0 ? inv.vmin : 1) / mod.voc);
+        const maxN   = Math.floor(inv.vlim / mod.voc);
+        warns.push(`<strong>ERRO DE STRING — "${mod.name}" no ${inv.name}</strong>: impossível formar qualquer string válida.<br>
+          O piso mínimo (Vmin = ${(inv.vmin > 0 ? inv.vmin : 0).toFixed(0)} V) exige ao menos ${floorN} módulos
+          (${(floorN * mod.voc).toFixed(1)} V), mas o limite máximo de ${inv.vlim.toFixed(0)} V
+          comporta no máximo ${maxN} módulo(s) (${(maxN * mod.voc).toFixed(1)} V).
+          Reduza o Vstart, aumente o Vmax do inversor ou use módulos com Voc menor.`);
+        return;
+      }
+      candidates.push({ st, ssBase });
+    });
+    if (!candidates.length) continue;
+
+    /* Cota proporcional ao nº de MPPTs livres de cada inversor, para
+       EQUILIBRAR a distribuição em vez de encher o primeiro inversor
+       da lista até o talo antes de tocar no próximo. Método dos maiores
+       restos: garante que a soma das cotas bate com mod.remaining. */
+    const totalFreeSlots = candidates.reduce((s, c) => s + (c.st.totalSlots - c.st.slotIdx), 0);
+    const rawQuota = candidates.map(c => mod.remaining * (c.st.totalSlots - c.st.slotIdx) / totalFreeSlots);
+    const quota = rawQuota.map(Math.floor);
+    const assigned = quota.reduce((s, q) => s + q, 0);
+    let leftoverToDistribute = mod.remaining - assigned;
+    const fracOrder = rawQuota
+      .map((q, idx) => ({ idx, frac: q - Math.floor(q) }))
+      .sort((a, b) => b.frac - a.frac);
+    for (let k = 0; k < fracOrder.length && leftoverToDistribute > 0; k++) {
+      quota[fracOrder[k].idx]++;
+      leftoverToDistribute--;
+    }
+
+    candidates.forEach((c, idx) => {
+      let quotaLeft = quota[idx];
+      if (quotaLeft <= 0 || mod.remaining <= 0) return;
+      const { st, ssBase } = c;
+      const inv = st.inv;
+
+      const nParallel = computeNParallel(inv, mod);
+      let ss = refineStringSize(ssBase, mod, quotaLeft, inv);
+
+      /* Se o tamanho "ideal" (mais próximo da nominal) não couber em
+         toda a cota deste inversor, aumenta o tamanho da string (acima
+         da nominal, sempre respeitando o teto de Vlim/Vmax) até caber
+         o máximo possível, em vez de descartar módulos. */
+      const availableSlots = st.totalSlots - st.slotIdx;
+      const modsPerMpptFor = (size) => size * nParallel;
+      if (Math.ceil(quotaLeft / modsPerMpptFor(ss)) > availableSlots) {
+        const maxNFit = Math.floor(inv.vlim / mod.voc);
+        let bumped = ss;
+        for (let n = ss + 1; n <= maxNFit; n++) {
+          bumped = n;
+          if (Math.ceil(quotaLeft / modsPerMpptFor(n)) <= availableSlots) break;
+        }
+        if (bumped > ss) {
+          warns.push(`⚠ "${mod.name}" — ${inv.name}: tamanho de string aumentado de ${ss} para ${bumped} módulos (acima da nominal, dentro do limite de Vmax) para caber mais módulos nos MPPTs disponíveis deste inversor.`);
+          ss = bumped;
+        }
+      }
+
+      while (quotaLeft > 0 && st.slotIdx < st.totalSlots) {
+        let strings;
+
+        if (nParallel >= 2 && quotaLeft >= ss * nParallel) {
+          strings = new Array(nParallel).fill(ss);
+        } else if (nParallel >= 2) {
+          strings = bestPartialFill(quotaLeft, nParallel, inv, mod);
+          if (!strings) {
+            const floor     = inv.vmin > 0 ? inv.vmin : 1;
+            const minPerStr = Math.ceil(floor / mod.voc);
+            notAlloc.push(`"${mod.name}" (${inv.name}): ${quotaLeft} módulo(s) restante(s) não alocados neste inversor — insuficientes para string válida (mínimo ${minPerStr} módulos = ${(minPerStr * mod.voc).toFixed(0)} V ≥ Vmin ${floor.toFixed(0)} V).`);
+            break;
+          }
+        } else {
+          const floorS    = inv.vmin > 0 ? inv.vmin : 1;
+          const minSingle = Math.ceil(floorS / mod.voc);
+          const maxSingle = Math.floor(inv.vlim / mod.voc);
+          if (quotaLeft < minSingle) {
+            notAlloc.push(`"${mod.name}" (${inv.name}): ${quotaLeft} módulo(s) restante(s) não alocados neste inversor — insuficientes para string válida (mínimo ${minSingle} módulos = ${(minSingle * mod.voc).toFixed(0)} V ≥ Vmin ${floorS.toFixed(0)} V).`);
+            break;
+          }
+          const capS = Math.min(quotaLeft, maxSingle);
+          let best = 0, bestDist = Infinity;
+          for (let n = minSingle; n <= capS; n++) {
+            const d = Math.abs(n * mod.voc - inv.vnom);
+            if (d < bestDist || (d === bestDist && n % 2 === 0 && best % 2 !== 0)) {
+              bestDist = d; best = n;
+            }
+          }
+          strings = [best];
+        }
+
+        const nTot = strings.reduce((a, b) => a + b, 0);
+        if (nTot === 0) break;
+
+        const vocTot = strings[0] * mod.voc;
+        const iscTot = mod.isc * strings.length;
+        const wTot   = nTot * mod.wp;
+        const delta  = vocTot - inv.vnom;
+
+        const unit = Math.floor(st.slotIdx / inv.nmppt) + 1;
+        const mpptInUnit = (st.slotIdx % inv.nmppt) + 1;
+
+        if (vocTot > inv.vmax)
+          warns.push(`⚠ "${mod.name}" — ${inv.name}${inv.qty>1?' (Unid. '+unit+')':''} MPPT ${mpptInUnit}: Voc total (${vocTot.toFixed(1)} V) EXCEDE Vmax (${inv.vmax} V). Risco de dano ao inversor!`);
+        if (iscTot > inv.imax)
+          warns.push(`⚠ "${mod.name}" — ${inv.name}${inv.qty>1?' (Unid. '+unit+')':''} MPPT ${mpptInUnit}: Isc total (${iscTot.toFixed(2)} A) EXCEDE Imax (${inv.imax} A). Risco de sobrecorrente!`);
+
+        rows.push({
+          invId: inv.id, invName: inv.name, invIdx: st.i, unit, unitTotal: inv.qty, mpptInUnit,
+          model: mod.name, strings, vocTot, iscTot, wTot, delta,
+          voc: mod.voc, isc: mod.isc, wp: mod.wp, vnom: inv.vnom,
+          vmax: inv.vmax, imax: inv.imax, vmin: inv.vmin, vlim: inv.vlim,
+          orientation: mod.orientationName || null
+        });
+
+        mod.remaining -= nTot;
+        quotaLeft -= nTot;
+        totalMods += nTot; totalPwr += wTot; st.invPwr += wTot; st.modsUsed += nTot;
+        st.slotIdx++;
+      }
+    });
+  }
+
+  /* Aumenta as strings de `candidateRows` que já usam `modEntry`, além do
+     teto conservador (85% Vmax) usado na 1ª passada, chegando perto do
+     Vmax real — sempre sem ultrapassá-lo e mantendo o mismatch entre
+     strings paralelas em no máximo 1 módulo. Consome modEntry.remaining
+     e mantém totalMods/totalPwr/invState em dia; devolve quanto coube. */
+  function bumpRowsTowardVmax(modEntry, candidateRows) {
+    let consumed = 0;
+    for (const r of candidateRows) {
+      if (modEntry.remaining <= 0) break;
+      const activeIdx = r.strings.map((v, i) => ({ v, i })).filter(x => x.v > 0);
+      if (!activeIdx.length) continue;
+      const nParallelRow = activeIdx.length;
+      const maxSizeAllowed = Math.floor(r.vmax / modEntry.voc);
+      const curMax = Math.max(...activeIdx.map(x => x.v));
+      if (maxSizeAllowed <= curMax) continue;
+
+      const oldTotal = activeIdx.reduce((s, x) => s + x.v, 0);
+      const maxTakeForRow = (maxSizeAllowed - curMax) * nParallelRow;
+      const take = Math.min(modEntry.remaining, maxTakeForRow);
+      if (take <= 0) continue;
+
+      const newTotal = oldTotal + take;
+      let base = Math.floor(newTotal / nParallelRow);
+      let extra = newTotal - base * nParallelRow;
+      activeIdx.forEach(x => {
+        r.strings[x.i] = base + (extra > 0 ? 1 : 0);
+        if (extra > 0) extra--;
+      });
+
+      const newMax = Math.max(...activeIdx.map(x => r.strings[x.i]));
+      const newVocTot = newMax * modEntry.voc;
+      const addedPwr = take * modEntry.wp;
+
+      warns.push(`⚠ "${modEntry.name}" — ${r.invName}${r.unitTotal>1?' (Unid. '+r.unit+')':''} MPPT ${r.mpptInUnit}: string aumentada para ${newMax} módulos (acima do teto conservador de 85% Vmax, chegando perto do Vmax real de ${r.vmax} V) para não deixar módulos de fora. Voc total agora: ${newVocTot.toFixed(1)} V.`);
+
+      r.vocTot = newVocTot;
+      r.wTot += addedPwr;
+      r.delta = r.vocTot - r.vnom;
+
+      modEntry.remaining -= take;
+      totalMods += take;
+      totalPwr += addedPwr;
+      const st = invState[r.invIdx];
+      if (st) { st.invPwr += addedPwr; st.modsUsed += take; }
+      consumed += take;
+    }
+    return consumed;
+  }
+
+  /* Sem mutar nada: quanto de `qty` extra as linhas de `candidateRows`
+     (já de modEntry) conseguiriam absorver até o Vmax de cada uma —
+     usado para decidir de antemão se um resgate vale a pena. */
+  function computeReabsorbCapacity(modEntry, candidateRows, qty) {
+    let cap = 0;
+    for (const r of candidateRows) {
+      if (cap >= qty) break;
+      const activeVals = r.strings.filter(v => v > 0);
+      if (!activeVals.length) continue;
+      const nParallelRow = activeVals.length;
+      const maxSizeAllowed = Math.floor(r.vmax / modEntry.voc);
+      const curMax = Math.max(...activeVals);
+      if (maxSizeAllowed <= curMax) continue;
+      cap += (maxSizeAllowed - curMax) * nParallelRow;
+    }
+    return Math.min(cap, qty);
+  }
+
+  /* ÚLTIMA CHANCE (1) — se sobrou módulo de algum modelo mesmo com todos
+     os MPPTs já ocupados, tenta aumentar as strings JÁ ALOCADAS desse
+     mesmo modelo até perto do Vmax real. Só entra em ação quando é isso
+     ou deixar módulo de fora. */
+  pool.forEach(mod => {
+    if (mod.remaining <= 0) return;
+    const modelRows = rows.filter(r => r.model === mod.name && (r.orientation || null) === (mod.orientationName || null));
+    bumpRowsTowardVmax(mod, modelRows);
+  });
+
+  /* ÚLTIMA CHANCE (2) — se AINDA sobrar módulo de um modelo, tenta
+     reatribuir o MPPT mais fraco (menor quantidade) de OUTRO modelo para
+     este, redistribuindo o que ele liberar entre as demais linhas do
+     modelo antigo (mesmo resgate acima). A decisão é calculada ANTES de
+     mexer em qualquer coisa — só aplica a troca quando o total de
+     módulos alocados no fim realmente aumenta; senão nem toca na linha
+     e tenta a próxima candidata. */
+  pool.forEach(mod => {
+    if (mod.remaining <= 0) return;
+    let progress = true;
+    while (mod.remaining > 0 && progress) {
+      progress = false;
+      const otherRowEntries = rows
+        .filter(r => r.model !== mod.name)
+        .sort((a, b) => {
+          const totalA = a.strings.reduce((s, v) => s + (v > 0 ? v : 0), 0);
+          const totalB = b.strings.reduce((s, v) => s + (v > 0 ? v : 0), 0);
+          return totalA - totalB;
+        });
+
+      for (const weakRow of otherRowEntries) {
+        if (mod.remaining <= 0) break;
+        const oldModelName = weakRow.model;
+        const oldPoolEntry = pool.find(p => p.name === oldModelName);
+        if (!oldPoolEntry) continue;
+
+        const freedQty = weakRow.strings.reduce((s, v) => s + (v > 0 ? v : 0), 0);
+        if (freedQty <= 0) continue;
+
+        /* O nº de strings em paralelo depende do Isc do modelo NOVO (não
+           do antigo!) — um modelo com Isc maior pode suportar menos
+           strings em paralelo sem estourar o Imax do MPPT. Reusar a
+           contagem do modelo antigo aqui já causou Isc total acima do
+           Imax num teste (2 strings de um modelo que só cabe 1). */
+        const nParallelRow = computeNParallel(inverters[weakRow.invIdx], mod);
+        const ssBase = bestStringSize(mod.voc, weakRow.vnom, weakRow.vlim, weakRow.vmin);
+        const maxByVmax = Math.floor(weakRow.vmax / mod.voc);
+        const ss = ssBase > 0 ? Math.min(ssBase, maxByVmax) : maxByVmax;
+        if (ss <= 0) continue; // este modelo nem forma string válida neste MPPT
+
+        const gain = Math.min(mod.remaining, ss * nParallelRow);
+        const otherRowsOfOldModel = rows.filter(r => r !== weakRow && r.model === oldModelName);
+        const reabsorbed = computeReabsorbCapacity(oldPoolEntry, otherRowsOfOldModel, freedQty);
+        const netChange = gain - (freedQty - reabsorbed);
+        if (netChange <= 0) continue; // não compensa — deixa essa linha quieta, tenta a próxima mais fraca
+
+        oldPoolEntry.remaining += freedQty;
+        totalMods -= freedQty; totalPwr -= weakRow.wTot;
+        invState[weakRow.invIdx].modsUsed -= freedQty; invState[weakRow.invIdx].invPwr -= weakRow.wTot;
+
+        weakRow.model = mod.name; weakRow.voc = mod.voc; weakRow.isc = mod.isc; weakRow.wp = mod.wp;
+        const baseN = Math.floor(gain / nParallelRow);
+        let extraN = gain - baseN * nParallelRow;
+        const newStrings = [];
+        for (let i = 0; i < nParallelRow; i++) {
+          newStrings.push(baseN + (extraN > 0 ? 1 : 0));
+          if (extraN > 0) extraN--;
+        }
+        weakRow.strings = newStrings;
+        const newMax = Math.max(...weakRow.strings.filter(v => v > 0), 0);
+        weakRow.vocTot = newMax * mod.voc;
+        weakRow.iscTot = mod.isc * weakRow.strings.filter(v => v > 0).length;
+        weakRow.wTot = gain * mod.wp;
+        weakRow.delta = weakRow.vocTot - weakRow.vnom;
+
+        mod.remaining -= gain;
+        totalMods += gain; totalPwr += weakRow.wTot;
+        invState[weakRow.invIdx].modsUsed += gain; invState[weakRow.invIdx].invPwr += weakRow.wTot;
+
+        bumpRowsTowardVmax(oldPoolEntry, otherRowsOfOldModel);
+
+        warns.push(`⚠ MPPT ${weakRow.mpptInUnit} (${weakRow.invName}) foi reatribuído de "${oldModelName}" para "${mod.name}": os ${freedQty} módulo(s) de "${oldModelName}" liberados foram redistribuídos nos demais MPPTs desse modelo, permitindo alocar mais módulos de "${mod.name}" que, de outra forma, ficariam de fora.`);
+
+        progress = true;
+        break;
+      }
+    }
+  });
+
+  pool.forEach(m => { if (m.remaining > 0) notAlloc.push(`"${m.name}": ${m.remaining} módulo(s) não alocados — nenhum inversor com MPPT disponível.`); });
+
+  const invStats = invState.map(st => ({
+    id: st.inv.id, name: st.inv.name, qty: st.inv.qty,
+    capTotal: st.inv.pmax * st.inv.qty, pwrUsed: st.invPwr,
+    slotsTotal: st.totalSlots, slotsUsed: Math.min(st.slotIdx, st.totalSlots),
+    modsUsed: st.modsUsed
+  }));
+
+  const allW = [...warns, ...notAlloc, ...oriCapWarnings];
+  if (allW.length) pushAlerts(alertsEl, allW.map(m => ({ type:'warn', msg: m })));
+
+  if (!rows.length) {
+    pushAlerts(alertsEl, [{ type:'err', msg:'Nenhuma string pôde ser configurada. Revise os parâmetros.' }]);
+    emptyEl.style.display = 'block'; resWrap.style.display = 'none';
+    hide('charts-row','stats-row','narr'); return;
+  }
+
+  const totalInvCapAll = invStats.reduce((s, x) => s + x.capTotal, 0);
+  const mpptUsedTotal  = invStats.reduce((s, x) => s + x.slotsUsed, 0);
+  const mpptTotalAll   = invStats.reduce((s, x) => s + x.slotsTotal, 0);
+  const ovPct = totalInvCapAll > 0 ? (totalPwr / totalInvCapAll * 100) : 0;
+
+  pushAlerts(alertsEl, [{ type:'ok', msg:`Dimensionamento concluído: <strong>${rows.length} MPPT(s)</strong> configurados em <strong>${inverters.length} modelo(s) de inversor</strong> — <strong>${totalMods} módulos</strong> — <strong>${(totalPwr/1000).toFixed(2)} kWp</strong>.` }]);
+
+  buildInvBalance(invStats);
+  buildInvProgress(invStats);
+
+  const maxStrings = rows.reduce((m, r) => Math.max(m, r.strings.length), 1);
+  lastRows = rows; lastInverters = inverters; lastOriActive = oriActive; currentMaxStrings = maxStrings;
+
+  lastPool = {};
+  modulesRaw.forEach(m => {
+    const allocated = rows.filter(r => r.model === m.name).reduce((s, r) => s + r.strings.reduce((a, b) => a + (b > 0 ? b : 0), 0), 0);
+    lastPool[m.name] = { wp: m.wp, voc: m.voc, isc: m.isc, comp: m.comp, larg: m.larg, remaining: m.qty - allocated };
+  });
+
+  const stringLabels = ['String A', 'String B', 'String C', 'String D'];
+  document.getElementById('t-head').innerHTML =
+    `<th>Inversor</th><th>MPPT</th>${oriActive ? '<th>Orientação</th>' : ''}<th>Modelo</th>${stringLabels.slice(0, maxStrings).map(l => `<th>${l}</th>`).join('')}
+     <th>Voc Total</th><th>Δ Nominal</th><th>Isc Total</th><th>Potência</th>`;
+  document.getElementById('t-body').innerHTML = rows.map((r, rowIdx) => rowHtml(r, rowIdx)).join('');
+
+  document.getElementById('s-mod').textContent = totalMods;
+  document.getElementById('s-pwr').innerHTML = (totalPwr/1000).toFixed(2)+'<span class="su">kWp</span>';
+  document.getElementById('s-mpp').textContent = mpptUsedTotal+' / '+mpptTotalAll;
+  document.getElementById('s-ovl').innerHTML = ovPct.toFixed(1)+'<span class="su">%</span>';
+
+  buildCharts(rows);
+  buildNarr(inverters, rows, totalMods, totalPwr, invStats, allW);
+
+  emptyEl.style.display = 'none';
+  resWrap.style.display = 'block';
+  show('charts-row','stats-row','narr');
+  document.getElementById('pdf-btn').disabled = false;
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function pushAlerts(el, list) {
+  el.innerHTML += list.map(a =>
+    `<div class="alert ${a.type}"><span class="ai">${a.type==='err'?'✖':a.type==='warn'?'△':'✔'}</span><div>${a.msg}</div></div>`
+  ).join('');
+}
+function hide(...ids) { ids.forEach(id => { const e=document.getElementById(id); if(e) e.style.display='none'; }); }
+function show(...ids) { ids.forEach(id => { const e=document.getElementById(id); if(e) e.style.display=''; }); }
+
+/* ============================================================
+   BALANÇO POR INVERSOR — quantos módulos/potência foram para
+   cada inversor, para conferir se a distribuição ficou equilibrada.
+   ============================================================ */
+function buildInvBalance(invStats) {
+  const wrap = document.getElementById('inv-balance-wrap');
+  const totalMods = invStats.reduce((s, x) => s + x.modsUsed, 0);
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>Inversor</th><th>Módulos Alocados</th><th>% do Total</th><th>MPPTs Usados</th><th>Potência</th><th>Carregamento CC</th>
+    </tr></thead>
+    <tbody>${invStats.map(s => {
+      const pct = s.capTotal > 0 ? (s.pwrUsed / s.capTotal * 100) : 0;
+      const color = pct > 95 ? 'var(--red)' : pct > 80 ? 'var(--amber)' : 'var(--green)';
+      const share = totalMods > 0 ? (s.modsUsed / totalMods * 100) : 0;
+      return `<tr>
+        <td class="tn">${s.name}${s.qty>1?' ('+s.qty+'x)':''}</td>
+        <td class="tw">${s.modsUsed}</td>
+        <td class="ti">${share.toFixed(1)}%</td>
+        <td>${s.slotsUsed} / ${s.slotsTotal}</td>
+        <td class="tv">${(s.pwrUsed/1000).toFixed(2)} / ${(s.capTotal/1000).toFixed(1)} kW</td>
+        <td style="color:${color};font-weight:600">${pct.toFixed(1)}%</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+/* ============================================================
+   PROGRESSO POR INVERSOR
+   ============================================================ */
+function buildInvProgress(invStats) {
+  const wrap = document.getElementById('prog-section');
+  wrap.innerHTML = invStats.map(s => {
+    const pct = s.capTotal > 0 ? (s.pwrUsed / s.capTotal * 100) : 0;
+    const color = pct > 95 ? 'var(--red)' : pct > 80 ? 'var(--amber)' : 'var(--green)';
+    return `<div class="prog-lbl">
+      <span>${s.name}${s.qty>1?' ('+s.qty+'x)':''} — ${s.modsUsed} módulos — Carregamento CC (${s.slotsUsed}/${s.slotsTotal} MPPTs)</span>
+      <span>${pct.toFixed(1)}%</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" style="width:${Math.min(pct,100)}%;background:${color}"></div></div>`;
+  }).join('');
+}
+
+/* ============================================================
+   CHARTS
+   ============================================================ */
+function buildCharts(rows) {
+  const BLUE   = 'rgba(37,99,235,0.18)';
+  const BLUE_B = '#2563eb';
+  const GREEN  = 'rgba(22,163,74,0.75)';
+  const RED    = 'rgba(220,38,38,0.75)';
+  const AMBER  = 'rgba(180,83,9,0.75)';
+
+  const labels = rows.map(r => (r.unitTotal > 1 ? 'I'+(r.invIdx+1)+'.'+r.unit : 'I'+(r.invIdx+1)) + '-M' + r.mpptInUnit);
+
+  if (chBar) chBar.destroy();
+  chBar = new Chart(document.getElementById('ch-bar'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'kWp', data: rows.map(r => +(r.wTot/1000).toFixed(3)),
+        backgroundColor: BLUE, borderColor: BLUE_B, borderWidth: 1.5, borderRadius: 4
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } },
+      scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { font: { size: 9 } } } }
+    }
+  });
+
+  if (chVolt) chVolt.destroy();
+  chVolt = new Chart(document.getElementById('ch-volt'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Voc String (V)',
+        data: rows.map(r => +r.vocTot.toFixed(1)),
+        backgroundColor: rows.map(r => r.delta < 0 ? RED : r.delta > r.vnom*0.15 ? AMBER : GREEN),
+        borderColor: rows.map(r => r.delta < 0 ? '#dc2626' : r.delta > r.vnom*0.15 ? '#b45309' : '#16a34a'),
+        borderWidth: 1.5, borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { font: { size: 9 } } },
+        y: { ticks: { font: { size: 9 } }, title: { display: true, text: 'V', font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   NARRATIVA
+   ============================================================ */
+function buildNarr(inverters, rows, totalMods, totalPwr, invStats, allW) {
+  const byModel = {};
+  rows.forEach(r => { (byModel[r.model] = byModel[r.model] || []).push(r); });
+
+  const totalUnits = invStats.reduce((s, i) => s + i.qty, 0);
+  const totalInvCapAll = invStats.reduce((s, i) => s + i.capTotal, 0);
+
+  let h = `
+    <p>O dimensionamento contemplou <strong>${inverters.length} modelo(s) de inversor</strong>
+    (${totalUnits} unidade(s) no total), com capacidade CC total de
+    <strong>${(totalInvCapAll/1000).toFixed(1)} kW</strong>. Foram alocados <strong>${totalMods} módulos</strong>,
+    totalizando <strong>${(totalPwr/1000).toFixed(2)} kWp</strong>.</p>`;
+
+  invStats.forEach((s, i) => {
+    const inv = inverters[i];
+    const pct = s.capTotal > 0 ? (s.pwrUsed / s.capTotal * 100) : 0;
+    h += `<p><strong>${s.name}</strong>${s.qty>1?` (${s.qty} unidades)`:''}: Vmax=${inv.vmax} V, Vstart=${inv.vstart} V
+    (nominal alvo ${inv.vnom.toFixed(0)} V, mínimo ${inv.vmin.toFixed(0)} V, teto ${inv.vlim.toFixed(0)} V),
+    ${inv.nmppt} MPPT(s) por unidade × ${inv.ent} entrada(s). Carregamento:
+    <strong>${(s.pwrUsed/1000).toFixed(2)} kWp de ${(s.capTotal/1000).toFixed(1)} kW (${pct.toFixed(1)}%)</strong>,
+    usando ${s.slotsUsed}/${s.slotsTotal} MPPTs.</p>`;
+  });
+
+  for (const [model, mrows] of Object.entries(byModel)) {
+    const r0 = mrows[0];
+    const modTotal = mrows.reduce((s, r) => s + r.strings.reduce((a, b) => a + b, 0), 0);
+    const invsUsed = [...new Set(mrows.map(r => r.invName))];
+    h += `<p>O modelo <strong>${model}</strong> (Voc = ${r0.voc} V | Isc = ${r0.isc} A | ${r0.wp} Wp)
+    foi distribuído em <strong>${mrows.length} MPPT(s)</strong>, totalizando <strong>${modTotal} módulos</strong>,
+    no(s) inversor(es): ${invsUsed.join(', ')}.</p>`;
+  }
+
+  const oriActive = orientations.length > 0;
+  if (oriActive) {
+    const byOri = {};
+    rows.forEach(r => { const k = r.orientation || 'Sem orientação definida'; (byOri[k] = byOri[k] || []).push(r); });
+    h += `<p><strong>Distribuição por orientação de telhado:</strong></p><ul>`;
+    for (const [oriName, orows] of Object.entries(byOri)) {
+      const oriTotal = orows.reduce((s, r) => s + r.strings.reduce((a, b) => a + b, 0), 0);
+      const oriPwr = orows.reduce((s, r) => s + r.wTot, 0);
+      h += `<li><span class="li-tag">${oriName}</span><span>${orows.length} MPPT(s) — ${oriTotal} módulos — ${(oriPwr/1000).toFixed(2)} kWp</span></li>`;
+    }
+    h += `</ul>`;
+  }
+
+  h += `<p><strong>Detalhamento por MPPT:</strong></p><ul>`;
+  rows.forEach(r => {
+    const stringDesc = r.strings.map((n, idx) => `${String.fromCharCode(65 + idx)}: <strong>${n}</strong>`).join(' | ');
+    h += `<li>
+      <span class="li-tag">${r.invName}${r.unitTotal>1?' U'+r.unit:''} · MPPT ${r.mpptInUnit}${oriActive && r.orientation ? ' · '+r.orientation : ''}</span>
+      <span>${r.model} —
+        String ${stringDesc} mód —
+        Voc: <strong>${r.vocTot.toFixed(1)} V</strong>
+        (Δ${r.delta>=0?'+':''}${r.delta.toFixed(1)} V) |
+        Isc: ${r.iscTot.toFixed(2)} A |
+        ${(r.wTot/1000).toFixed(3)} kWp
+      </span>
+    </li>`;
+  });
+  h += `</ul>`;
+
+  h += `<p><strong>Regras aplicadas:</strong>
+  (1) Módulos de modelos diferentes nunca dividem o mesmo MPPT.
+  (2) Cada modelo é alocado no inversor atual até esgotar seus MPPTs; o que sobra é levado ao próximo inversor da lista.
+  (3) O tamanho de string busca a tensão mais próxima da nominal (60% Vmax) de cada inversor, respeitando o piso (Vstart×1,5) e o teto (85% Vmax).
+  (4) Ao ajustar o tamanho de string para eliminar sobra de módulos, o algoritmo nunca se afasta da nominal mais do que o dobro da distância original.
+  (5) O mismatch entre strings paralelas de um mesmo MPPT foi mantido em no máximo 1 módulo.
+  (6) O nº de strings em paralelo por MPPT é o menor valor entre as "Entradas por MPPT" do inversor e quantas strings cabem sem que o Isc combinado ultrapasse o Imax do MPPT.
+  (7) A potência total alocada (${(totalPwr/1000).toFixed(2)} kWp) não ultrapassa a capacidade CC somada de todos os inversores (${(totalInvCapAll/1000).toFixed(1)} kW).
+  ${oriActive ? '(8) Como há orientações de telhado cadastradas, módulos de orientações diferentes também nunca dividem o mesmo MPPT.' : ''}</p>`;
+
+  if (allW.length) {
+    h += `<p style="color:var(--amber)"><strong>Ressalvas e alertas:</strong></p>`;
+    allW.forEach(w => { h += `<p style="color:var(--amber);font-size:12px;">• ${w}</p>`; });
+  }
+
+  document.getElementById('narr-body').innerHTML = h;
+}
+
+/* ============================================================
+   PDF EXPORT
+   ============================================================ */
+function exportPDF() {
+  const now = new Date().toLocaleString('pt-BR');
+  document.getElementById('footer-date').textContent = 'Gerado em: ' + now;
+  window.print();
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+loadAISettings();
+renderSavedInvSelect();
+renderSavedModSelect();
+</script>
+</body>
+</html>
